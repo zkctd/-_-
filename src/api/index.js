@@ -75,8 +75,20 @@ export const papersDetail = (params) => {
   return get("/papers/detail/", params);
 };
 
+export const examPaperList = (params) => {
+  return get("/exams/getPaperList", params);
+};
+
 export const examList = (params) => {
   return get("/exams/", params);
+};
+
+export const dpartList = (params) => {
+  return get("/departs/getDpartList/", params);
+};
+
+export const examDetail = (params) => {
+  return get("/exams/detail", params);
 };
 // POST
 export const login = (params) => {
@@ -117,6 +129,10 @@ export const createQuestions = (params) => {
 export const createPapers = (params) => {
   return post("/papers/create/", params);
 };
+
+export const createExam = (params) => {
+  return post("/exams/create/", params);
+};
 // PUT
 export const editorUser = (params) => {
   return put("users/editorUser/", params);
@@ -153,6 +169,11 @@ export const papersChange = (params) => {
 export const examsUpdate = (params) => {
   return put("exams/update/", params);
 };
+
+export const resetExam = (params) => {
+  return put("exams/resetExam/", params);
+};
+
 // DELETE
 export const logout = (params) => {
   return del("users/logout/", params);
@@ -168,4 +189,8 @@ export const delQuestion = (params) => {
 
 export const delPapers = (params) => {
   return del("papers/delete/", params);
+};
+
+export const delExam = (params) => {
+  return del("exams/delete/", params);
 };

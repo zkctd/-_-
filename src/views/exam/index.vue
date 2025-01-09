@@ -342,6 +342,42 @@ const handleReturn = () => {
       // 取消返回
     });
 };
+
+const processQuestions = (questions, isRandom) => {
+  // 按题型分组
+  const groupedQuestions = {
+    single: questions.filter((q) => q.type === "single"),
+    multiple: questions.filter((q) => q.type === "multiple"),
+    judge: questions.filter((q) => q.type === "judge"),
+    short: questions.filter((q) => q.type === "short"),
+  };
+  if (isRandom) {
+    Object.keys(groupedQuestions).forEach((type) => {
+      if (groupedQuestions[type].length) {
+        groupedQuestions[type] = shuffleArray([...groupedQuestions[type]]);
+      }
+    });
+  }
+  const processedQuestions = [
+    ...groupedQuestions.single,
+    ...groupedQuestions.multiple,
+    ...groupedQuestions.judge,
+    ...groupedQuestions.short,
+  ].map((q, index) => ({
+    ...q,
+    index: index + 1,
+  }));
+
+  return processedQuestions;
+};
+// 随机打乱数组的辅助函数
+const shuffleArray = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
 let timer;
 onMounted(async () => {
   const examId = route.query.id;
@@ -375,6 +411,7 @@ onMounted(async () => {
         difficulty: q.question.difficulty,
         classify: q.question.classify.split(";"),
       }));
+      questions.value = processQuestions(questions.value, data.is_random === 1);
 
       // 初始化答案
       questions.value.forEach((q) => {

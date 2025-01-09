@@ -23,6 +23,16 @@ const routes = [
         name: "accountSetting",
         component: () => import("../views/top/AccountSetting.vue"),
       },
+      {
+        path: "/exam_detail",
+        name: "exam_detail",
+        component: () => import("../views/exam_detail/index.vue"),
+      },
+      {
+        path: "/UserPaperDetail",
+        name: "UserPaperDetail",
+        component: () => import("../views/exam_detail/UserPaperDetail.vue"),
+      },
     ],
   },
   {

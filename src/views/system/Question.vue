@@ -255,7 +255,7 @@
               <el-select
                 v-model="questionInfoForm.type"
                 style="width: 120px"
-                :disabled="questionInfoForm.id !== undefined"
+                :disabled="!!questionInfoForm.id"
               >
                 <el-option
                   v-for="item in typeOptions"
@@ -271,7 +271,7 @@
             v-else
             v-model="questionInfoForm.type"
             style="width: 120px"
-            :disabled="questionInfoForm.id !== undefined"
+            :disabled="!!questionInfoForm.id"
           >
             <el-option
               v-for="item in typeOptions"

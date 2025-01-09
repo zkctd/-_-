@@ -52,6 +52,22 @@
                 />
               </el-select>
             </el-form-item>
+            <el-form-item prop="depart" label="所在部门：">
+              <el-select
+                v-model="searchForm.depart"
+                style="width: 150px"
+                :empty-values="[null, undefined]"
+                :value-on-clear="null"
+                placeholder="请选择部门"
+              >
+                <el-option
+                  v-for="item in dpartOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
             <el-form-item prop="keywords">
               <el-input
                 class="search"
@@ -131,7 +147,7 @@
             <el-table-column
               prop="username"
               label="用户名"
-              width="200px"
+              width="100px"
               show-overflow-tooltip
             ></el-table-column>
             <el-table-column
@@ -145,9 +161,15 @@
               </template>
             </el-table-column>
             <el-table-column
+              prop="depart"
+              label="部门"
+              width="150px"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
               prop="phone"
               label="手机号"
-              width="200"
+              width="150"
               show-overflow-tooltip
             >
               <template #default="{ row }">
@@ -383,6 +405,28 @@
             />
           </el-form-item>
           <el-form-item
+            label="所属部门"
+            prop="depart"
+            label-position="left"
+            class="user-form-item"
+            :rules="[
+              { required: true, trigger: 'blur', message: '请选择部门' },
+            ]"
+          >
+            <el-select
+              v-model="userInfoForm.depart"
+              style="width: 30%"
+              placeholder="请选择部门"
+            >
+              <el-option
+                v-for="item in dpartOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item
             label="用户状态"
             prop="status"
             label-position="left"
@@ -486,6 +530,7 @@ import {
   editorAdmin,
   changeStatus,
   downloadFile,
+  dpartList,
 } from "@/api/index";
 import ImportAPI from "@/api/upload";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -494,12 +539,14 @@ import { useStore } from "vuex";
 const store = useStore();
 const tableData = ref([]);
 const searchRef = ref();
+const dpartOptions = ref([]);
 const searchForm = ref({
   keywords: "",
   pageNo: 1,
   pageSize: 10,
   status: "",
   user_type: null,
+  depart: null,
 });
 const statusOptions = [
   { value: "", label: "全部" },
@@ -520,6 +567,7 @@ const userInfoForm = ref({
   phone: "",
   status: 0,
   user_type: 0,
+  depart: "",
 });
 const total = ref(0);
 const editUserDialogVisible = ref(false);
@@ -558,6 +606,20 @@ const searchEvtHandler = () => {
   fetchUsers();
 };
 
+const getDpartList = async () => {
+  try {
+    const res = await dpartList();
+    if (res.code === 200) {
+      dpartOptions.value = res.data.map((item) => ({
+        value: item.id,
+        label: item.name,
+      }));
+    }
+  } catch (error) {
+    console.error("获取部门列表失败:", error);
+  }
+};
+
 const resetSearchForm = () => {
   searchForm.value.pageNo = 1;
   searchForm.value.user_type = null;
@@ -576,6 +638,7 @@ const handleAddUser = async () => {
     phone: "",
     status: 0,
     user_type: 0,
+    depart: "",
   };
   editUserDialogVisible.value = true;
   showPassword.value = true;
@@ -849,6 +912,7 @@ const cancelBatchAdd = () => {
 
 onMounted(() => {
   fetchUsers();
+  getDpartList();
 });
 </script>
 

@@ -74,7 +74,7 @@
             <el-table-column
               prop="exam_description"
               label="试卷描述"
-              width="390"
+              width="300"
               show-overflow-tooltip
             ></el-table-column>
             <el-table-column prop="exam_duration" label="试卷时长" width="100">
@@ -104,6 +104,12 @@
                   >已发布</el-tag
                 >
                 <el-tag v-else type="info" size="small">未发布</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="is_random" label="是否随机" width="100">
+              <template #default="{ row }">
+                <el-tag v-if="row.is_random === 1" size="small">是</el-tag>
+                <el-tag v-else size="small">否</el-tag>
               </template>
             </el-table-column>
             <el-table-column
@@ -190,6 +196,12 @@
             type="textarea"
             :rows="4"
           ></el-input>
+        </el-form-item>
+        <el-form-item label="是否随机" prop="is_random" class="exam-form-item">
+          <el-radio-group v-model="examInfoForm.is_random">
+            <el-radio :label="1">是</el-radio>
+            <el-radio :label="0">否</el-radio>
+          </el-radio-group>
         </el-form-item>
         <el-form-item
           label="试卷时长"
@@ -404,6 +416,7 @@ const examInfoForm = ref({
   exam_name: "",
   exam_description: "",
   exam_duration: 0,
+  is_random: 0,
   questions: [
     {
       question: "",
@@ -492,6 +505,7 @@ const handleAddExam = () => {
     exam_name: "",
     exam_description: "",
     exam_duration: 0,
+    is_random: 0,
     questions: [],
   };
   editExamDialogVisible.value = true;
@@ -515,6 +529,7 @@ const submitExamInfo = () => {
             exam_name: examInfoForm.value.exam_name,
             exam_description: examInfoForm.value.exam_description,
             exam_duration: examInfoForm.value.exam_duration,
+            is_random: examInfoForm.value.is_random,
             questions: formattedQuestions,
           };
 
@@ -549,6 +564,7 @@ const submitExamInfo = () => {
             exam_description: examInfoForm.value.exam_description,
             exam_duration: examInfoForm.value.exam_duration,
             status: examInfoForm.value.status,
+            is_random: examInfoForm.value.is_random,
             questions: formattedQuestions,
           };
 
@@ -785,6 +801,7 @@ const rules = {
     { required: true, trigger: "blur", message: "请输入试卷时长" },
     { type: "integer", message: "请输入整数", trigger: "blur" },
   ],
+  is_random: [{ required: true, trigger: "change", message: "请选择是否随机" }],
   questions: [{ required: true, trigger: "change", message: "请添加试卷题目" }],
 };
 onMounted(async () => {
