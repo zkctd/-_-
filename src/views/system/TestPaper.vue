@@ -62,6 +62,7 @@
             border
             size="large"
             @selection-change="handleSelectionChange"
+            :default-sort="{ prop: 'created_at', order: 'descending' }"
           >
             <el-table-column type="selection" width="55" />
             <el-table-column
@@ -126,13 +127,21 @@
             ></el-table-column>
             <el-table-column label="操作" min-width="270px">
               <template #default="{ row }">
-                <el-button type="primary" @click="handeleChangeStatus(row)" link
+                <el-button
+                  v-if="row.status === false"
+                  type="primary"
+                  @click="handeleChangeStatus(row)"
+                  link
                   >发布试卷</el-button
                 >
                 <el-button type="primary" @click="handlePreview(row)" link
                   >预览试卷</el-button
                 >
-                <el-button type="primary" @click="handleEdit(row)" link
+                <el-button
+                  v-if="row.status === false"
+                  type="primary"
+                  @click="handleEdit(row)"
+                  link
                   >修改</el-button
                 >
                 <el-button type="danger" @click="handleDelete(row)" link
@@ -199,8 +208,8 @@
         </el-form-item>
         <el-form-item label="是否随机" prop="is_random" class="exam-form-item">
           <el-radio-group v-model="examInfoForm.is_random">
-            <el-radio :label="1">是</el-radio>
-            <el-radio :label="0">否</el-radio>
+            <el-radio :value="1">是</el-radio>
+            <el-radio :value="0">否</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item
@@ -366,16 +375,6 @@
           </template>
         </el-table-column>
       </el-table>
-      <el-pagination
-        background
-        :page-size="questionSearchForm.pageSize"
-        :current-page="questionSearchForm.pageNo"
-        :total="questionTotal"
-        @size-change="handleQuestionSizeChange"
-        @current-change="handleQuestionCurrentChange"
-        layout="total, sizes, prev, pager, next, jumper"
-        style="justify-content: center; margin-top: 2%"
-      />
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="cancelSelectQuestion">取消</el-button>
@@ -399,6 +398,7 @@ import {
   delPapers,
   papersUpdate,
   papersChange,
+  allQuestionList,
 } from "@/api/index";
 import { useRouter } from "vue-router";
 const router = useRouter();
@@ -450,8 +450,6 @@ const filterTableData = computed(() =>
 );
 const questionSearchForm = ref({
   type: "",
-  pageNo: 1,
-  pageSize: 10,
 });
 const search = ref("");
 const questionTotal = ref(0);
@@ -667,7 +665,7 @@ const handleDelete = async (row) => {
 };
 
 const handeleChangeStatus = async (row) => {
-  ElMessageBox.confirm("确定发布该试卷？", "发布试卷", {
+  ElMessageBox.confirm("确定发布该试卷？发布之后不允许修改。", "发布试卷", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning",
@@ -706,9 +704,9 @@ const fetchQuestions = async () => {
     }
   }
   try {
-    const response = await questionsList(searchParams);
-    if (response.code === 200 && response.data.data) {
-      questionTableData.value = response.data.data.map((item) => ({
+    const response = await allQuestionList(searchParams);
+    if (response.code === 200 && response.data) {
+      questionTableData.value = response.data.map((item) => ({
         ...item,
         classify: Array.isArray(item.classify)
           ? item.classify
@@ -717,7 +715,6 @@ const fetchQuestions = async () => {
               .map((tag) => tag.trim())
               .filter((tag) => tag.length > 0),
       }));
-      questionTotal.value = response.data.total;
     } else {
       questionTableData.value = [];
     }
@@ -729,17 +726,6 @@ const fetchQuestions = async () => {
 const handleQuestionSelectionChange = (rows) => {
   selectedQuestions.value = rows;
 };
-
-const handleQuestionCurrentChange = (newPage) => {
-  questionSearchForm.value.pageNo = newPage;
-  fetchQuestions();
-};
-
-const handleQuestionSizeChange = (newSize) => {
-  questionSearchForm.value.pageSize = newSize;
-  fetchQuestions();
-};
-
 const cancelSelectQuestion = () => {
   search.value = "";
   selectQuestionDialogVisible.value = false;

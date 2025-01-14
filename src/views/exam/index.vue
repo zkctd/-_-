@@ -232,7 +232,7 @@
           </div>
           <div class="action-buttons">
             <el-button
-              v-if="usertype.value === 0"
+              v-if="usertype === 0"
               type="primary"
               size="large"
               @click="handleSubmit"
@@ -252,7 +252,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { Timer } from "@element-plus/icons-vue";
-import { papersDetail } from "@/api/index";
+import { papersDetail, resultCreat } from "@/api/index";
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "vuex";
 import { ElMessageBox } from "element-plus";
@@ -269,7 +269,8 @@ const examInfo = ref({
   judgeScore: 0,
   shortScore: 0,
 });
-
+const submit_examaId = ref("");
+const IsshowAnswer = ref();
 const questions = ref([]);
 const answers = ref({});
 const currentQuestionIndex = ref(1);
@@ -317,8 +318,62 @@ const handleSubmit = () => {
     type: "warning",
   })
     .then(() => {
-      // 提交逻辑
-      // ...
+      // 格式化答案
+      const answersList = Object.keys(answers.value).map((index) => {
+        const question = questions.value[index - 1];
+        let formattedAnswer = "";
+
+        // 根据题型格式化答案
+        switch (question.type) {
+          case "single":
+            // 单选题答案转为字符串
+            formattedAnswer = answers.value[index]?.toString() || "";
+            break;
+          case "multiple":
+            // 多选题答案用分号连接
+            formattedAnswer = Array.isArray(answers.value[index])
+              ? answers.value[index].sort().join(";")
+              : "";
+            break;
+          case "judge":
+            // 判断题转为 "1"/"0"
+            formattedAnswer =
+              answers.value[index] === true
+                ? "1"
+                : answers.value[index] === false
+                ? "0"
+                : "";
+            break;
+          case "short":
+            // 简答题直接转字符串
+            formattedAnswer = answers.value[index]?.toString() || "";
+            break;
+        }
+
+        return {
+          question: question.id,
+          solution: formattedAnswer,
+        };
+      });
+
+      // 提交答案
+      resultCreat({
+        exam_id: submit_examaId.value,
+        user_id: JSON.parse(localStorage.getItem("userInfo")).id,
+        questions_solutions: answersList,
+      })
+        .then((response) => {
+          if (response.code === 200) {
+            if (IsshowAnswer.value === 1) {
+              router.push("/exam/result");
+            } else {
+              router.push("/MyExmam");
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("提交试卷失败:", error);
+        });
     })
     .catch(() => {
       // 取消提交
@@ -380,7 +435,14 @@ const shuffleArray = (array) => {
 };
 let timer;
 onMounted(async () => {
-  const examId = route.query.id;
+  let examId;
+  if (usertype.value === 1) {
+    examId = route.query.id;
+  } else if (usertype.value === 0) {
+    examId = route.query.paperId;
+    submit_examaId.value = route.query.examId;
+    IsshowAnswer.value = route.query.showAnswer;
+  }
   try {
     const response = await papersDetail({ id: examId });
     if (response.code === 200) {

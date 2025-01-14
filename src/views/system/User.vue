@@ -133,7 +133,7 @@
           <el-table
             :data="tableData"
             border
-            :default-sort="{ prop: 'date', order: 'descending' }"
+            :default-sort="{ prop: 'user_type', order: 'descending' }"
             size="large"
             @selection-change="handleSelectionChange"
           >
@@ -176,7 +176,7 @@
                 <el-tag v-if="row.phone === ''" type="danger" size="small"
                   >未设置</el-tag
                 >
-                <el-tag v-else type="" size="small">{{ row.phone }}</el-tag>
+                <el-tag v-else size="small">{{ row.phone }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column

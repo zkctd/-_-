@@ -90,6 +90,26 @@ export const dpartList = (params) => {
 export const examDetail = (params) => {
   return get("/exams/detail", params);
 };
+
+export const allUserList = (params) => {
+  return get("/users/getUserList", params);
+};
+
+export const allQuestionList = (params) => {
+  return get("/questions/getQuestions", params);
+};
+
+export const myExamList = (params) => {
+  return get("/users/getExamsList", params);
+};
+
+export const examResult = (params) => {
+  return get("/results/detail/", params);
+};
+
+export const isTest = (params) => {
+  return get("/users/startAnswering/", params);
+};
 // POST
 export const login = (params) => {
   return post("users/login/", params);
@@ -132,6 +152,10 @@ export const createPapers = (params) => {
 
 export const createExam = (params) => {
   return post("/exams/create/", params);
+};
+
+export const resultCreat = (params) => {
+  return post("/users/submitCard/", params);
 };
 // PUT
 export const editorUser = (params) => {

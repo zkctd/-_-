@@ -92,6 +92,7 @@
             @selection-change="handleSelectionChange"
             :row-class-name="tableRowClassName"
             :select-on-indeterminate="true"
+            :default-sort="{ prop: 'status', order: 'descending' }"
           >
             <el-table-column
               type="selection"
@@ -131,15 +132,65 @@
                       ? '/images/common/disable.png'
                       : row.status === 1
                       ? '/images/common/reject.png'
-                      : '/images/common/normal.png'
+                      : row.status === 2
+                      ? '/images/common/normal.png'
+                      : '/images/common/pending.png'
                   "
                   alt=""
                 />
                 {{ getExamStatusName(row.status) }}
               </template>
             </el-table-column>
+            <el-table-column prop="departments" label="参考部门" width="250">
+              <template #default="{ row }">
+                <el-tag
+                  v-for="dept in row.departments"
+                  :key="dept.id"
+                  type="info"
+                  style="margin-right: 5px"
+                  v-if="
+                    row.number === 0 || (row.number === 1 && row.status === 3)
+                  "
+                  >{{ dept.name }}</el-tag
+                >
+                <div v-else>-</div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="users" label="重考人员" width="180">
+              <template #default="{ row }">
+                <el-tag
+                  v-for="user in row.users"
+                  :key="user.id"
+                  type="info"
+                  style="margin-right: 5px"
+                  v-if="row.number !== 0"
+                  >{{ user.name }}</el-tag
+                >
+                <div v-else>-</div>
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="re_answer"
+              label="是否允许重复考试"
+              width="150"
+              show-overflow-tooltip
+            >
+              <template #default="{ row }">
+                {{ row.re_answer === 0 ? "否" : "是" }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="show_answer"
+              label="是否立即显示答案"
+              width="150"
+              show-overflow-tooltip
+            >
+              <template #default="{ row }">
+                {{ row.show_answer === 0 ? "否" : "是" }}
+              </template>
+            </el-table-column>
             <el-table-column prop="number" label="已考次数" width="100" />
-            <el-table-column label="操作" min-width="200px">
+            <el-table-column label="操作" min-width="250px">
               <template #default="{ row }">
                 <el-button
                   v-if="row.status === 2"
@@ -269,6 +320,78 @@
           </el-select>
         </el-form-item>
         <el-form-item
+          label="是否可重复考试"
+          prop="title"
+          label-position="left"
+          class="exam-form-item"
+        >
+          <el-radio-group v-model="examInfoForm.re_answer">
+            <el-radio :value="0">否</el-radio>
+            <el-radio :value="1">是</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item
+          label="是否立即显示答案"
+          prop="title"
+          label-position="left"
+          class="exam-form-item"
+        >
+          <el-radio-group v-model="examInfoForm.show_answer">
+            <el-radio :value="0">否</el-radio>
+            <el-radio :value="1">是</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item
+          label="考试部门"
+          prop="title"
+          label-position="left"
+          class="exam-form-item"
+          v-if="examInfoForm.number === 0"
+        >
+          <el-checkbox-group v-model="examInfoForm.departments">
+            <el-checkbox
+              v-for="(item, index) in departmentOptions"
+              :key="index"
+              :label="item.name"
+              :value="item.value"
+              >{{ item.label }}</el-checkbox
+            >
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item
+          label="重考人员"
+          prop="title"
+          label-position="left"
+          class="exam-form-item"
+          v-if="examInfoForm.number !== 0 && examInfoForm.id"
+        >
+          <div class="add-retake-user">
+            <el-button type="primary" @click="showRetakeUserDialog"
+              >添加重考人员</el-button
+            >
+          </div>
+          <el-table
+            :data="examInfoForm.users"
+            border
+            size="small"
+            max-height="400"
+          >
+            <el-table-column prop="name" label="姓名"></el-table-column>
+            <el-table-column prop="depart" label="所属部门"></el-table-column>
+            <el-table-column label="操作" width="120">
+              <template #default="{ $index }">
+                <el-button
+                  type="danger"
+                  link
+                  size="small"
+                  @click="removeRetakeUser($index)"
+                  >删除</el-button
+                >
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-form-item>
+        <el-form-item
           label="开始时间"
           prop="start_time"
           label-position="left"
@@ -336,7 +459,12 @@
         :rules="restartRules"
         label-width="100px"
       >
-        <el-form-item label="开始时间" prop="start_time">
+        <el-form-item
+          label="开始时间"
+          prop="start_time"
+          label-position="left"
+          class="exam-form-item"
+        >
           <el-date-picker
             v-model="restartForm.start_time"
             type="datetime"
@@ -347,12 +475,48 @@
             :show-now="false"
           />
         </el-form-item>
-        <el-form-item label="结束时间">
+        <el-form-item
+          label="结束时间"
+          label-position="left"
+          class="exam-form-item"
+        >
           <el-input
             v-model="restartForm.end_time"
             disabled
             style="width: 220px"
           />
+        </el-form-item>
+        <el-form-item
+          label="重考人员"
+          prop="title"
+          label-position="left"
+          class="exam-form-item"
+        >
+          <div class="add-retake-user">
+            <el-button type="primary" @click="showRetakeUserDialog"
+              >添加重考人员</el-button
+            >
+          </div>
+          <el-table
+            :data="restartForm.users"
+            border
+            size="small"
+            max-height="400"
+          >
+            <el-table-column prop="name" label="姓名"></el-table-column>
+            <el-table-column prop="depart" label="所属部门"></el-table-column>
+            <el-table-column label="操作" width="120">
+              <template #default="{ $index }">
+                <el-button
+                  type="danger"
+                  link
+                  size="small"
+                  @click="removeRetakeUser($index)"
+                  >删除</el-button
+                >
+              </template>
+            </el-table-column>
+          </el-table>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -364,11 +528,45 @@
         </span>
       </template>
     </el-dialog>
+    <el-dialog
+      v-model="retakeUserDialogVisible"
+      title="选择重考人员"
+      width="50%"
+    >
+      <el-table
+        :data="filterRetakeUserData"
+        border
+        size="small"
+        @selection-change="handleRetakeUserSelectionChange"
+        max-height="500"
+      >
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="name" label="姓名">
+          <template #header>
+            <el-input
+              v-model="retakeUserSearch"
+              size="small"
+              placeholder="输入姓名搜索"
+              style="margin-bottom: unset"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column prop="depart" label="所属部门" />
+      </el-table>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="cancelRetakeUserSelect">取消</el-button>
+          <el-button type="primary" @click="confirmRetakeUserSelect"
+            >确定</el-button
+          >
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   examList,
@@ -378,6 +576,9 @@ import {
   delExam,
   examDetail,
   resetExam,
+  dpartList,
+  userList,
+  allUserList,
 } from "@/api/index";
 import dayjs from "dayjs";
 import { useRouter } from "vue-router";
@@ -401,16 +602,116 @@ const examInfoForm = ref({
   end_time: "",
   status: null,
   number: 0,
+  re_answer: 0,
+  show_answer: 0,
+  departments: [],
+  users: [],
 });
 const restartDialogVisible = ref(false);
 const restartFormRef = ref(null);
+const departmentOptions = ref([]);
 const restartForm = ref({
   id: "",
   start_time: "",
   end_time: "",
+  users: [],
   duration: 0,
 });
+const retakeUserDialogVisible = ref(false);
+const retakeUserTableData = ref([]);
+const selectedRetakeUsers = ref([]);
+const retakeUserSearch = ref("");
+const userSearchForm = ref({});
+const userTotal = ref(0);
+const filterRetakeUserData = computed(() =>
+  retakeUserTableData.value.filter(
+    (data) =>
+      !retakeUserSearch.value ||
+      data.name.toLowerCase().includes(retakeUserSearch.value.toLowerCase())
+  )
+);
 
+const ReDialogFlag = ref(false);
+const showRetakeUserDialog = async () => {
+  retakeUserDialogVisible.value = true;
+  await fetchRetakeUsers(); // 获取可选用户列表
+};
+const fetchRetakeUsers = async () => {
+  try {
+    const searchParams = new URLSearchParams();
+    for (const key in userSearchForm.value) {
+      const value = userSearchForm.value[key];
+      if (value != null && value !== "") {
+        searchParams.append(key, value);
+      }
+    }
+
+    const response = await allUserList(searchParams);
+    if (response.code === 200) {
+      retakeUserTableData.value = Array.isArray(response.data)
+        ? response.data
+        : [];
+    } else {
+      retakeUserTableData.value = [];
+    }
+  } catch (error) {
+    console.error("获取用户列表失败:", error);
+    retakeUserTableData.value = [];
+  }
+};
+
+// 选择用户变化处理
+const handleRetakeUserSelectionChange = (rows) => {
+  selectedRetakeUsers.value = rows;
+};
+
+// 删除重考人员
+const removeRetakeUser = (index) => {
+  if (examInfoForm.value.users) {
+    examInfoForm.value.users.splice(index, 1);
+  } else {
+    restartForm.value.users.splice(index, 1);
+  }
+};
+
+// 取消选择
+const cancelRetakeUserSelect = () => {
+  retakeUserSearch.value = "";
+  retakeUserDialogVisible.value = false;
+};
+
+// 确认选择
+const confirmRetakeUserSelect = () => {
+  if (!examInfoForm.value.users) {
+    examInfoForm.value.users = [];
+  }
+  if (!restartForm.value.users) {
+    restartForm.value.users = [];
+  }
+
+  // 过滤掉已存在的用户
+  const newUsers = selectedRetakeUsers.value.filter((user) =>
+    ReDialogFlag.value
+      ? !restartForm.value.users.some(
+          (existingUser) => existingUser.id === user.id
+        )
+      : !examInfoForm.value.users.some(
+          (existingUser) => existingUser.id === user.id
+        )
+  );
+
+  // 添加新用户
+  if (newUsers.length > 0) {
+    ReDialogFlag.value
+      ? restartForm.value.users.push(...newUsers)
+      : examInfoForm.value.users.push(...newUsers);
+  }
+
+  // 清理并关闭对话框
+  selectedRetakeUsers.value = [];
+  retakeUserSearch.value = "";
+  retakeUserDialogVisible.value = false;
+};
 const validateStartTime = (rule, value, callback) => {
   if (!value) {
     callback(new Error("请选择开始时间"));
@@ -434,6 +735,7 @@ const statusOptions = [
   { value: 0, label: "未开始" },
   { value: 1, label: "进行中" },
   { value: 2, label: "已结束" },
+  { value: 3, label: "考试异常" },
 ];
 const fetchExams = async () => {
   const searchParams = new URLSearchParams();
@@ -471,8 +773,10 @@ const cancelRestart = () => {
     id: "",
     start_time: "",
     end_time: "",
+    users: [],
     duration: 0,
   };
+  ReDialogFlag.value = false;
 };
 const handleAddExam = async () => {
   dialogTitle.value = "新增考试";
@@ -481,6 +785,11 @@ const handleAddExam = async () => {
     paper_id: null,
     start_time: "",
     end_time: "",
+    re_answer: 0,
+    show_answer: 0,
+    departments: [],
+    users: [],
+    number: 0,
   };
   // 获取下拉框试卷列表
   try {
@@ -494,6 +803,17 @@ const handleAddExam = async () => {
     }
   } catch (error) {
     console.error("获取试卷列表失败:", error);
+  }
+  try {
+    const response = await dpartList();
+    if (response.code === 200) {
+      departmentOptions.value = response.data.map((item) => ({
+        value: item.id,
+        label: item.name,
+      }));
+    }
+  } catch (error) {
+    console.error("获取部门列表失败:", error);
   }
   editExamDialogVisible.value = true;
 };
@@ -511,6 +831,10 @@ const submitExamInfo = () => {
         ),
         paper_id: examInfoForm.value.id ? null : examInfoForm.value.paper_id,
         title: examInfoForm.value.title,
+        re_answer: examInfoForm.value.re_answer,
+        show_answer: examInfoForm.value.show_answer,
+        departments: examInfoForm.value.departments,
+        users: examInfoForm.value.users,
       };
       try {
         if (!examInfoForm.value.id) {
@@ -589,6 +913,17 @@ const cancelEditExam = () => {
 const handleEdit = async (row) => {
   dialogTitle.value = "修改考试";
   try {
+    const response = await dpartList();
+    if (response.code === 200) {
+      departmentOptions.value = response.data.map((item) => ({
+        value: item.id,
+        label: item.name,
+      }));
+    }
+  } catch (error) {
+    console.error("获取部门列表失败:", error);
+  }
+  try {
     const response = await examDetail({ id: row.id });
     if (response.code === 200 && response.data) {
       // 获取试卷列表以获取试卷时长
@@ -610,6 +945,11 @@ const handleEdit = async (row) => {
         end_time: response.data.end_time,
         paper_id: response.data.paper,
         exam_duration: paper ? paper.exam_duration : 0,
+        re_answer: response.data.re_answer,
+        show_answer: response.data.show_answer,
+        departments: response.data.departments.map((dept) => dept.id),
+        users: response.data.users || [],
+        number: response.data.number,
       };
       editExamDialogVisible.value = true;
     } else {
@@ -629,6 +969,10 @@ const handleRestart = async (row) => {
         start_time: response.data.start_time,
         end_time: response.data.end_time,
         paper_id: response.data.paper,
+        re_answer: response.data.re_answer,
+        show_answer: response.data.show_answer,
+        departments: response.data.departments.map((dept) => dept.id),
+        users: response.data.users.map((user) => user.id),
       };
       const paperResponse = await examPaperList();
       const paper = paperResponse.data.find(
@@ -638,9 +982,11 @@ const handleRestart = async (row) => {
         id: row.id,
         start_time: "",
         end_time: "",
+        users: [],
         duration: paper ? paper.exam_duration : 0, // 从试卷中获取时长
       };
       restartDialogVisible.value = true;
+      ReDialogFlag.value = true;
     } else {
       console.error("查询考试详情失败");
     }
@@ -676,10 +1022,12 @@ const submitRestart = async () => {
           id: restartForm.value.id,
           start_time: restartForm.value.start_time,
           end_time: restartForm.value.end_time,
+          users: restartForm.value.users,
         });
         if (response.code === 200) {
           ElMessage.success("重启成功!");
           restartDialogVisible.value = false;
+          ReDialogFlag.value = false;
           await fetchExams();
         }
       } catch (error) {
@@ -729,6 +1077,7 @@ const getExamStatusName = (status) => {
     0: "未开始",
     1: "进行中",
     2: "已结束",
+    3: "考试异常",
   };
   return statusMap[status] || "未知";
 };
@@ -751,6 +1100,12 @@ const rules = {
   start_time: [
     { required: true, message: "请选择开始时间", trigger: "change" },
     { validator: validateStartTime, trigger: "change" },
+  ],
+  re_answer: [
+    { required: true, trigger: "change", message: "请选择是否允许重考" },
+  ],
+  show_answer: [
+    { required: true, trigger: "change", message: "请选择是否立即显示答案" },
   ],
   end_time: [{ required: true, trigger: "change", message: "请选择结束时间" }],
 };
@@ -921,6 +1276,13 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   gap: 20px;
+}
+.add-retake-user {
+  margin-bottom: 20px;
+}
+
+.retake-user-table {
+  margin-top: 10px;
 }
 
 :deep(.el-dialog__body) {

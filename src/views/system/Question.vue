@@ -119,6 +119,7 @@
             border
             size="large"
             @selection-change="handleSelectionChange"
+            :default-sort="{ prop: 'type', order: 'descending' }"
           >
             <el-table-column type="selection" width="55" />
             <el-table-column
@@ -542,8 +543,10 @@ import {
   questionsDetail,
   questionsExport,
   downloadFile,
+  allQuestionList,
 } from "@/api/index";
 import ImportAPI from "@/api/upload";
+import * as XLSX from "xlsx";
 const tableData = ref([]);
 const dialogTitle = ref("");
 const searchRef = ref();
@@ -860,29 +863,85 @@ const handleImportQuestions = () => {
 
 const handleExportQuestions = async () => {
   try {
-    const response = await questionsExport({});
+    // 获取所有题目数据
+    const response = await allQuestionList();
+    if (response.code === 200) {
+      // 格式化数据
+      const exportData = response.data.map((item) => {
+        // 格式化选项
+        let options = "";
+        if (item.type !== "short") {
+          options = Array.isArray(item.options)
+            ? item.options.join(";")
+            : item.options.split(";").join(";");
+        }
 
-    // 创建一个 Blob 对象
-    const blob = new Blob([response.data], {
-      type: response.headers["content-type"],
-    });
+        // 格式化答案
+        let answer = "";
+        if (item.type === "single") {
+          answer = String.fromCharCode(65 + parseInt(item.answer));
+        } else if (item.type === "multiple") {
+          answer = item.answer
+            .split(";")
+            .map((index) => String.fromCharCode(65 + parseInt(index)))
+            .join(";");
+        } else if (item.type === "judge") {
+          answer = item.answer === "0" ? "正确" : "错误";
+        } else if (item.type === "short") {
+          answer = "";
+        }
 
-    // 创建一个下载链接
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "题库.xlsx"); // 设置下载文件的名称
-    document.body.appendChild(link);
-    link.click();
+        // 格式化分类
+        const classify = Array.isArray(item.classify)
+          ? item.classify.join(";")
+          : item.classify;
 
-    // 释放内存
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(link);
+        // 格式化关键字
+        const keywords =
+          item.type === "short"
+            ? Array.isArray(item.keywords)
+              ? item.keywords.join(";")
+              : item.keywords
+            : "";
 
-    ElMessage.success("导出题库成功");
+        return {
+          试题标题: item.topic,
+          试题选项: options,
+          试题参考答案: answer,
+          试题类型: item.type,
+          试题难度: item.difficulty,
+          考试类别: classify,
+          关键字: keywords,
+        };
+      });
+
+      // 创建工作簿和工作表
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+
+      // 设置列宽
+      const colWidths = [
+        { wch: 40 }, // 试题标题
+        { wch: 30 }, // 试题选项
+        { wch: 20 }, // 试题参考答案
+        { wch: 15 }, // 试题类型
+        { wch: 15 }, // 试题难度
+        { wch: 20 }, // 考试类别
+        { wch: 20 }, // 关键字
+      ];
+      ws["!cols"] = colWidths;
+
+      // 将工作表添加到工作簿
+      XLSX.utils.book_append_sheet(wb, ws, "试题列表");
+
+      // 生成并下载文件
+      XLSX.writeFile(wb, "试题集.xlsx");
+
+      ElMessage.success("导出成功！");
+    }
   } catch (error) {
-    console.error("导出题库失败:", error);
-    ElMessage.error("导出题库失败");
+    console.error("导出失败:", error);
+    ElMessage.error("导出失败");
   }
 };
 const addOption = () => {

@@ -1,365 +1,398 @@
 <template>
   <div class="code-setting-box">
-    <el-row class="setting-up-row">
-      <el-col :span="24">
-        <el-card shadow="hover">
-          <span class="common-text code-setting-title">账号设置</span>
-        </el-card>
-      </el-col>
-    </el-row>
-    <el-form :model="userInfo" label-width="auto" class="infoForm">
-      <el-row class="setting-down-row" :gutter="52">
-        <el-col :span="24" class="code-setting-content">
-          <el-form-item label="" label-position="left">
-            <span class="titlevalue">
-              <span class="title1">个人信息</span>
-              <el-button class="title2" @click="editUserInfoDialog = true"
-                >修改</el-button
-              >
-            </span>
-          </el-form-item>
-          <el-divider class="form-divider" />
-          <el-form-item label="" label-position="left">
-            <span class="titlevalue">
-              <span class="title1">账号密码</span>
-              <el-button class="title2" @click="editUserPassDialog = true"
-                >修改</el-button
-              >
-            </span>
-          </el-form-item>
-          <el-divider class="form-divider" />
-          <el-form-item label="" label-position="left">
-            <span class="titlevalue">
-              <span class="title1">账号绑定邮箱 <{{ email }}></span>
-              <el-button class="title2" @click="editEmailDialog = true"
-                >解绑</el-button
-              >
-            </span>
-          </el-form-item>
-          <el-divider class="form-divider" />
-        </el-col>
-      </el-row>
-    </el-form>
-    <!-- 修改弹窗 -->
-    <div class="user-dialog">
-      <el-dialog
-        v-model="editEmailDialog"
-        :show-close="false"
-        :before-close="cancelEmail"
-      >
-        <template #header>
-          <div class="title-box">
-            <div class="title">
-              <p class="common-text">解绑邮箱</p>
+    <div class="settings-container">
+      <!-- 顶部标题区域 -->
+      <div class="settings-header glass-effect">
+        <h1>账号设置</h1>
+        <p class="subtitle">管理你的个人信息和账号安全</p>
+      </div>
+
+      <!-- 主要内容区域 -->
+      <div class="settings-content">
+        <!-- 个人信息卡片 -->
+        <div class="settings-card glass-effect">
+          <div class="card-header">
+            <div class="header-icon">
+              <el-avatar
+                :size="64"
+                :src="userInfo.avatar || '/images/default-avatar.png'"
+              />
             </div>
-            <div class="close-icon">
-              <el-icon @click="cancelEmail()"
-                ><span class="iconfont close close-color"></span
-              ></el-icon>
+            <div class="header-info">
+              <h2>{{ userInfo.name }}</h2>
+              <p>{{ userInfo.username }}</p>
             </div>
           </div>
-        </template>
-        <el-divider />
-        <el-form
-          ref="emailEditRef"
-          :model="emailEditForm"
-          :rules="emailEditRules"
-          class="editUserInfoForm"
-        >
-          <el-form-item label="新邮箱" prop="newEmail" class="head-portrait">
-            <el-input
-              v-model="emailEditForm.newEmail"
-              placeholder="请输入新邮箱"
-              size="large"
-              class="account-input"
-            />
-          </el-form-item>
-          <el-form-item label="验证码" prop="code" class="head-portrait">
-            <el-input
-              v-model="emailEditForm.code"
-              placeholder="请输入旧邮箱获取的验证码"
-              size="large"
-              class="account-input"
-            >
-              <template #suffix>
-                <el-button
-                  type="primary"
-                  @click="sendVerificationCode"
-                  :disabled="countdown > 0"
-                >
-                  {{ countdown > 0 ? `${countdown}秒后重发` : "获取验证码" }}
-                </el-button>
-              </template>
-            </el-input>
-          </el-form-item>
-        </el-form>
-        <template #footer>
-          <div class="dialog-footer">
-            <el-button
-              @click="cancelEmail()"
-              color="#2D67B2"
-              class="common-text common-button-white button-h-w"
-              plain
-              >取消</el-button
-            >
-            <el-button
-              color="#2D67B2"
-              @click="submitEmailForm"
-              class="common-text common-button-blue button-h-w"
-              >确定</el-button
-            >
-          </div>
-        </template>
-      </el-dialog>
-    </div>
-    <div class="user-dialog">
-      <el-dialog
-        v-model="editUserInfoDialog"
-        :show-close="false"
-        :before-close="cancel"
-      >
-        <template #header>
-          <div class="title-box">
-            <div class="title">
-              <p class="common-text">修改个人信息</p>
+
+          <!-- 设置项列表 -->
+          <div class="settings-list">
+            <!-- 个人信息设置 -->
+            <div class="setting-item" @click="editUserInfoDialog = true">
+              <div class="item-left">
+                <el-icon><User /></el-icon>
+                <div class="item-info">
+                  <h3>个人信息</h3>
+                  <p>更新你的个人资料</p>
+                </div>
+              </div>
+              <el-icon class="arrow"><ArrowRight /></el-icon>
             </div>
-            <div class="close-icon">
-              <el-icon @click="cancel()"
-                ><span class="iconfont close close-color"></span
-              ></el-icon>
+
+            <!-- 密码设置 -->
+            <div class="setting-item" @click="editUserPassDialog = true">
+              <div class="item-left">
+                <el-icon><Lock /></el-icon>
+                <div class="item-info">
+                  <h3>账号密码</h3>
+                  <p>修改你的登录密码</p>
+                </div>
+              </div>
+              <el-icon class="arrow"><ArrowRight /></el-icon>
+            </div>
+
+            <!-- 邮箱设置 -->
+            <div class="setting-item" @click="editEmailDialog = true">
+              <div class="item-left">
+                <el-icon><Message /></el-icon>
+                <div class="item-info">
+                  <h3>邮箱绑定</h3>
+                  <p>{{ email || "未绑定邮箱" }}</p>
+                </div>
+              </div>
+              <el-icon class="arrow"><ArrowRight /></el-icon>
             </div>
           </div>
-        </template>
-        <el-divider />
-        <el-form
-          ref="userInfoEditRef"
-          :model="userInfoEditForm"
-          :rules="userInfoRules"
-          class="editUserInfoForm"
-        >
-          <el-form-item label="姓名" prop="name" class="head-portrait">
-            <el-input
-              v-model="userInfoEditForm.name"
-              placeholder="请输入姓名"
-              width="80%"
-              size="large"
-            />
-          </el-form-item>
-          <el-form-item label="用户名" prop="username" class="head-portrait">
-            <el-input
-              v-model="userInfoEditForm.username"
-              placeholder="请输入用户名"
-              width="80%"
-              size="large"
-            />
-          </el-form-item>
-          <el-form-item label="手机号" prop="phone" class="head-portrait">
-            <el-input
-              v-model="userInfoEditForm.phone"
-              placeholder="请输入手机号"
-              width="80%"
-              size="large"
-            />
-          </el-form-item>
-        </el-form>
-        <template #footer>
-          <div class="dialog-footer">
-            <el-button
-              @click="cancel()"
-              color="#2D67B2"
-              class="common-text common-button-white button-h-w"
-              plain
-              >取消</el-button
-            >
-            <el-button
-              color="#2D67B2"
-              @click="submitUserInfoForm"
-              class="common-text common-button-blue button-h-w"
-              >确定</el-button
-            >
-          </div>
-        </template>
-      </el-dialog>
-    </div>
-    <div class="account-dialog">
-      <el-dialog
-        v-model="editUserPassDialog"
-        min-width="777px"
-        :show-close="false"
-        :before-close="cancel"
-      >
-        <template #header>
-          <div class="title-box">
-            <div class="title">
-              <p class="common-text">修改账号信息</p>
-            </div>
-            <div class="close-icon">
-              <el-icon @click="cancel()"
-                ><span class="iconfont close close-color"></span
-              ></el-icon>
-            </div>
-          </div>
-        </template>
-        <el-divider />
-        <el-form
-          ref="userPassEditRef"
-          :model="userPassEditForm"
-          :rules="userPassRules"
-          class="editUserPassForm"
-        >
-          <el-form-item label="旧密码" prop="password" class="head-portrait">
-            <el-input
-              v-model="userPassEditForm.password"
-              :type="oldPasswordType"
-              placeholder="请输入"
-              size="large"
-              class="account-input"
-            >
-              <template #suffix>
-                <span
-                  @click="
-                    oldPasswordType =
-                      oldPasswordType === 'password' ? 'text' : 'password'
-                  "
-                  class="view-password"
-                >
-                  <el-icon
-                    v-if="oldPasswordType === 'password'"
-                    class="el-input__icon"
-                    ><Hide
-                  /></el-icon>
-                  <el-icon
-                    v-else-if="oldPasswordType === 'text'"
-                    class="el-input__icon"
-                    ><View
-                  /></el-icon>
-                </span>
-              </template>
-            </el-input>
-          </el-form-item>
-          <el-form-item
-            label="新密码"
-            prop="new_password"
-            class="head-portrait"
-          >
-            <el-input
-              v-model="userPassEditForm.new_password"
-              :type="newPasswordType"
-              placeholder="请输入新密码（6-16位字母数字特殊字符混合密码）"
-              class="account-input"
-              size="large"
-            >
-              <template #suffix>
-                <span
-                  @click="
-                    newPasswordType =
-                      newPasswordType === 'password' ? 'text' : 'password'
-                  "
-                  class="view-password"
-                >
-                  <el-icon
-                    v-if="newPasswordType === 'password'"
-                    class="el-input__icon"
-                    ><Hide
-                  /></el-icon>
-                  <el-icon
-                    v-else-if="newPasswordType === 'text'"
-                    class="el-input__icon"
-                    ><View
-                  /></el-icon>
-                </span>
-              </template>
-            </el-input>
-          </el-form-item>
-          <el-form-item
-            label="确认密码"
-            prop="confirm_password"
-            class="head-portrait"
-          >
-            <el-input
-              v-model="userPassEditForm.confirm_password"
-              :type="newPasswordConfirmType"
-              placeholder="请输入确认密码（两次密码必须一致）"
-              class="account-input"
-              size="large"
-            >
-              <template #suffix>
-                <span
-                  @click="
-                    newPasswordConfirmType =
-                      newPasswordConfirmType === 'password'
-                        ? 'text'
-                        : 'password'
-                  "
-                  class="view-password"
-                >
-                  <el-icon
-                    v-if="newPasswordConfirmType === 'password'"
-                    class="el-input__icon"
-                    ><Hide
-                  /></el-icon>
-                  <el-icon
-                    v-else-if="newPasswordConfirmType === 'text'"
-                    class="el-input__icon"
-                    ><View
-                  /></el-icon>
-                </span>
-              </template>
-            </el-input>
-          </el-form-item>
-        </el-form>
-        <template #footer>
-          <div class="dialog-footer">
-            <el-button
-              @click="cancel()"
-              color="#2D67B2"
-              class="common-text common-button-white button-h-w"
-              plain
-              >取消</el-button
-            >
-            <el-button
-              color="#2D67B2"
-              @click="submitUserPassForm"
-              class="common-text common-button-blue button-h-w"
-              >确定</el-button
-            >
-          </div>
-        </template>
-      </el-dialog>
-    </div>
-  </div>
-  <!-- 成功确认弹框 -->
-  <el-dialog
-    v-model="updateDialogVisible"
-    :show-close="false"
-    width="291"
-    align-center
-  >
-    <template #header>
-      <div class="my-header">
-        <div class="common-text title">修改成功</div>
-        <div class="close-icon">
-          <el-icon @click="commitDelete"
-            ><span class="iconfont close close-color"></span
-          ></el-icon>
+        </div>
+
+        <!-- 安全提示卡片 -->
+        <div class="security-card glass-effect">
+          <p>建议定期更新密码，确保账号安全</p>
         </div>
       </div>
-    </template>
-    <div class="com-content">
-      <el-icon :size="16" color="#00CC33"> <SuccessFilled /></el-icon>
-      <div class="common-text">修改密码成功，请重新登录！</div>
-    </div>
-    <template #footer>
-      <div class="com-commit">
-        <el-button
-          @click="commitDelete"
-          color="#2D67B2"
-          class="common-text common-button-blue"
-          >确认</el-button
+      <!-- 修改弹窗 -->
+      <div class="user-dialog">
+        <el-dialog
+          v-model="editEmailDialog"
+          :show-close="false"
+          :before-close="cancelEmail"
+          align-center
         >
+          <template #header>
+            <div class="title-box">
+              <div class="title">
+                <p class="common-text">解绑邮箱</p>
+              </div>
+              <div class="close-icon">
+                <el-icon @click="cancelEmail()"
+                  ><span class="iconfont close close-color"></span
+                ></el-icon>
+              </div>
+            </div>
+          </template>
+          <el-divider />
+          <el-form
+            ref="emailEditRef"
+            :model="emailEditForm"
+            :rules="emailEditRules"
+            class="editUserInfoForm"
+          >
+            <el-form-item label="新邮箱" prop="newEmail" class="head-portrait">
+              <el-input
+                v-model="emailEditForm.newEmail"
+                placeholder="请输入新邮箱"
+                size="large"
+                class="account-input"
+              />
+            </el-form-item>
+            <el-form-item label="验证码" prop="code" class="head-portrait">
+              <el-input
+                v-model="emailEditForm.code"
+                placeholder="请输入旧邮箱获取的验证码"
+                size="large"
+                class="account-input"
+              >
+                <template #suffix>
+                  <el-button
+                    type="primary"
+                    @click="sendVerificationCode"
+                    :disabled="countdown > 0"
+                  >
+                    {{ countdown > 0 ? `${countdown}秒后重发` : "获取验证码" }}
+                  </el-button>
+                </template>
+              </el-input>
+            </el-form-item>
+          </el-form>
+          <template #footer>
+            <div class="dialog-footer">
+              <el-button
+                @click="cancelEmail()"
+                color="#2D67B2"
+                class="common-text common-button-white button-h-w"
+                plain
+                >取消</el-button
+              >
+              <el-button
+                color="#2D67B2"
+                @click="submitEmailForm"
+                class="common-text common-button-blue button-h-w"
+                >确定</el-button
+              >
+            </div>
+          </template>
+        </el-dialog>
       </div>
-    </template>
-  </el-dialog>
+      <div class="user-dialog">
+        <el-dialog
+          v-model="editUserInfoDialog"
+          :show-close="false"
+          :before-close="cancel"
+          align-center
+        >
+          <template #header>
+            <div class="title-box">
+              <div class="title">
+                <p class="common-text">修改个人信息</p>
+              </div>
+              <div class="close-icon">
+                <el-icon @click="cancel()"
+                  ><span class="iconfont close close-color"></span
+                ></el-icon>
+              </div>
+            </div>
+          </template>
+          <el-divider />
+          <el-form
+            ref="userInfoEditRef"
+            :model="userInfoEditForm"
+            :rules="userInfoRules"
+            class="editUserInfoForm"
+          >
+            <el-form-item label="姓名" prop="name" class="head-portrait">
+              <el-input
+                v-model="userInfoEditForm.name"
+                placeholder="请输入姓名"
+                width="80%"
+                size="large"
+              />
+            </el-form-item>
+            <el-form-item label="用户名" prop="username" class="head-portrait">
+              <el-input
+                v-model="userInfoEditForm.username"
+                placeholder="请输入用户名"
+                width="80%"
+                size="large"
+              />
+            </el-form-item>
+            <el-form-item label="手机号" prop="phone" class="head-portrait">
+              <el-input
+                v-model="userInfoEditForm.phone"
+                placeholder="请输入手机号"
+                width="80%"
+                size="large"
+              />
+            </el-form-item>
+          </el-form>
+          <template #footer>
+            <div class="dialog-footer">
+              <el-button
+                @click="cancel()"
+                color="#2D67B2"
+                class="common-text common-button-white button-h-w"
+                plain
+                >取消</el-button
+              >
+              <el-button
+                color="#2D67B2"
+                @click="submitUserInfoForm"
+                class="common-text common-button-blue button-h-w"
+                >确定</el-button
+              >
+            </div>
+          </template>
+        </el-dialog>
+      </div>
+      <div class="account-dialog">
+        <el-dialog
+          v-model="editUserPassDialog"
+          min-width="777px"
+          :show-close="false"
+          :before-close="cancel"
+          align-center
+        >
+          <template #header>
+            <div class="title-box">
+              <div class="title">
+                <p class="common-text">修改账号信息</p>
+              </div>
+              <div class="close-icon">
+                <el-icon @click="cancel()"
+                  ><span class="iconfont close close-color"></span
+                ></el-icon>
+              </div>
+            </div>
+          </template>
+          <el-divider />
+          <el-form
+            ref="userPassEditRef"
+            :model="userPassEditForm"
+            :rules="userPassRules"
+            class="editUserPassForm"
+          >
+            <el-form-item label="旧密码" prop="password" class="head-portrait">
+              <el-input
+                v-model="userPassEditForm.password"
+                :type="oldPasswordType"
+                placeholder="请输入"
+                size="large"
+                class="account-input"
+              >
+                <template #suffix>
+                  <span
+                    @click="
+                      oldPasswordType =
+                        oldPasswordType === 'password' ? 'text' : 'password'
+                    "
+                    class="view-password"
+                  >
+                    <el-icon
+                      v-if="oldPasswordType === 'password'"
+                      class="el-input__icon"
+                      ><Hide
+                    /></el-icon>
+                    <el-icon
+                      v-else-if="oldPasswordType === 'text'"
+                      class="el-input__icon"
+                      ><View
+                    /></el-icon>
+                  </span>
+                </template>
+              </el-input>
+            </el-form-item>
+            <el-form-item
+              label="新密码"
+              prop="new_password"
+              class="head-portrait"
+            >
+              <el-input
+                v-model="userPassEditForm.new_password"
+                :type="newPasswordType"
+                placeholder="请输入新密码（6-16位字母数字特殊字符混合密码）"
+                class="account-input"
+                size="large"
+              >
+                <template #suffix>
+                  <span
+                    @click="
+                      newPasswordType =
+                        newPasswordType === 'password' ? 'text' : 'password'
+                    "
+                    class="view-password"
+                  >
+                    <el-icon
+                      v-if="newPasswordType === 'password'"
+                      class="el-input__icon"
+                      ><Hide
+                    /></el-icon>
+                    <el-icon
+                      v-else-if="newPasswordType === 'text'"
+                      class="el-input__icon"
+                      ><View
+                    /></el-icon>
+                  </span>
+                </template>
+              </el-input>
+            </el-form-item>
+            <el-form-item
+              label="确认密码"
+              prop="confirm_password"
+              class="head-portrait"
+            >
+              <el-input
+                v-model="userPassEditForm.confirm_password"
+                :type="newPasswordConfirmType"
+                placeholder="请输入确认密码（两次密码必须一致）"
+                class="account-input"
+                size="large"
+              >
+                <template #suffix>
+                  <span
+                    @click="
+                      newPasswordConfirmType =
+                        newPasswordConfirmType === 'password'
+                          ? 'text'
+                          : 'password'
+                    "
+                    class="view-password"
+                  >
+                    <el-icon
+                      v-if="newPasswordConfirmType === 'password'"
+                      class="el-input__icon"
+                      ><Hide
+                    /></el-icon>
+                    <el-icon
+                      v-else-if="newPasswordConfirmType === 'text'"
+                      class="el-input__icon"
+                      ><View
+                    /></el-icon>
+                  </span>
+                </template>
+              </el-input>
+            </el-form-item>
+          </el-form>
+          <template #footer>
+            <div class="dialog-footer">
+              <el-button
+                @click="cancel()"
+                color="#2D67B2"
+                class="common-text common-button-white button-h-w"
+                plain
+                >取消</el-button
+              >
+              <el-button
+                color="#2D67B2"
+                @click="submitUserPassForm"
+                class="common-text common-button-blue button-h-w"
+                >确定</el-button
+              >
+            </div>
+          </template>
+        </el-dialog>
+      </div>
+    </div>
+    <!-- 成功确认弹框 -->
+    <el-dialog
+      v-model="updateDialogVisible"
+      :show-close="false"
+      width="291"
+      align-center
+    >
+      <template #header>
+        <div class="my-header">
+          <div class="common-text title">修改成功</div>
+          <div class="close-icon">
+            <el-icon @click="commitDelete"
+              ><span class="iconfont close close-color"></span
+            ></el-icon>
+          </div>
+        </div>
+      </template>
+      <div class="com-content">
+        <el-icon :size="16" color="#00CC33"> <SuccessFilled /></el-icon>
+        <div class="common-text">修改密码成功，请重新登录！</div>
+      </div>
+      <template #footer>
+        <div class="com-commit">
+          <el-button
+            @click="commitDelete"
+            color="#2D67B2"
+            class="common-text common-button-blue"
+            >确认</el-button
+          >
+        </div>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup>
@@ -374,7 +407,7 @@ import {
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Hide, View } from "@element-plus/icons-vue";
 import { useRouter } from "vue-router";
-
+import { User, Lock, Message, ArrowRight } from "@element-plus/icons-vue";
 const router = useRouter();
 const oldPasswordType = ref("password");
 const newPasswordType = ref("password");
@@ -611,229 +644,201 @@ const commitDelete = async () => {
 </script>
 
 <style lang="less" scoped>
-.code-setting-box {
-  overflow: hidden;
-  .setting-up-row {
-    background-color: #fff;
-    margin-bottom: 10px;
-    .code-setting-title {
-      font-size: 18px;
-      margin-left: 20px;
-    }
+.settings-container {
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
   }
-  .infoForm {
-    background-color: #fff;
-    min-height: 80vh;
-  }
-  .user-dialog,
-  .account-dialog,
-  .email-dialog {
-    ::v-deep(.el-overlay .el-overlay-dialog .el-dialog) {
-      width: 777px;
-      height: 475px;
-    }
-    ::v-deep(.el-dialog__body .el-divider--horizontal) {
+
+  .settings-header {
+    padding: 2rem;
+    margin-bottom: 2rem;
+
+    h1 {
       margin: 0;
-      border-top: 1px solid #f2f2f2;
+      font-size: 2rem;
+      color: #1a1a1a;
+      font-weight: 600;
     }
-    ::v-deep(.el-overlay .el-overlay-dialog .el-dialog) {
-      padding-left: 0;
-      padding-right: 0;
+
+    .subtitle {
+      margin-top: 0.5rem;
+      color: #666;
+      font-size: 1rem;
     }
+  }
+
+  .settings-content {
+    display: grid;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+
+    .settings-card {
+      padding: 2rem;
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
+        .header-info {
+          h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #1a1a1a;
+          }
+
+          p {
+            margin: 0.5rem 0 0;
+            color: #666;
+          }
+        }
+      }
+
+      .settings-list {
+        display: grid;
+        gap: 1rem;
+
+        .setting-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1.25rem;
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.5);
+          transition: all 0.3s ease;
+          cursor: pointer;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+          }
+
+          .item-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+
+            .el-icon {
+              font-size: 1.5rem;
+              color: #409eff;
+            }
+
+            .item-info {
+              h3 {
+                margin: 0;
+                font-size: 1rem;
+                color: #1a1a1a;
+              }
+
+              p {
+                margin: 0.25rem 0 0;
+                font-size: 0.875rem;
+                color: #666;
+              }
+            }
+          }
+
+          .arrow {
+            color: #999;
+            font-size: 1.25rem;
+            transition: transform 0.3s ease;
+          }
+
+          &:hover .arrow {
+            transform: translateX(4px);
+            color: #409eff;
+          }
+        }
+      }
+    }
+
+    .security-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, #e6f7ff 0%, #e6fffa 100%);
+
+      .el-icon {
+        font-size: 1.5rem;
+        color: #52c41a;
+      }
+
+      p {
+        margin: 0;
+        color: #666;
+      }
+    }
+  }
+}
+
+// 对话框样式更新
+::v-deep(.el-dialog) {
+  border-radius: 16px;
+  overflow: hidden;
+
+  .el-dialog__header {
+    // background: #f8f9fa;
+    padding: 1.5rem;
+    margin: 0;
+
     .title-box {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      line-height: 18px;
-      padding: 0 20px;
+
       .title {
-        p {
-          margin: 0;
-          font-size: 16px;
-        }
-      }
-    }
-    .close-color {
-      color: #999999;
-    }
-    .close-icon:hover {
-      .close-color {
-        color: #2d67b2;
-      }
-    }
-  }
-  .account-dialog {
-    ::v-deep(.el-overlay .el-overlay-dialog .el-dialog) {
-      width: 777px;
-      height: 642px;
-    }
-  }
-  .editUserInfoForm {
-    padding: 20px 20px 0 20px;
-    .head-portrait {
-      position: relative;
-      display: grid;
-      gap: 20px;
-      ::v-deep(.el-form-item__label) {
-        font-family: Arial, sans-serif;
-        font-weight: 400;
-        font-style: normal;
-        font-size: 16px;
-        letter-spacing: normal;
-        color: #555555;
-        justify-content: unset;
+        margin: 0;
+        font-size: 1.5rem;
+        color: #1a1a1a;
       }
 
-      ::v-deep(.el-input) {
-        width: 90%;
-      }
-      .random-img {
-        width: 26px;
-        height: 26px;
-        background-color: #2e68b2;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: absolute;
-        top: 72px;
-        left: 72px;
-      }
-      .random-img:hover {
+      .close-icon {
         cursor: pointer;
-      }
-    }
-  }
-  .editUserPassForm {
-    padding: 20px 20px 0 20px;
-    .account-input {
-      width: 100% !important;
-    }
-    .head-portrait {
-      position: relative;
-      display: grid;
-      row-gap: 10px;
-      margin-bottom: 30px;
-      ::v-deep(.el-form-item__label) {
-        font-family: Arial, sans-serif;
-        font-weight: 400;
-        font-style: normal;
-        font-size: 16px;
-        letter-spacing: normal;
-        color: #555555;
-        justify-content: unset;
-      }
-      .view-password {
-        cursor: pointer;
-      }
-    }
-  }
-  .setting-down-row {
-    overflow: hidden;
-    .code-setting-content {
-      max-width: calc(100% - 60px);
-      height: auto;
-      border: none;
-      margin-left: 40px;
-      margin-top: 40px;
 
-      .titlevalue {
-        display: flex;
-        gap: 25px;
-        padding-bottom: 10px;
-      }
-
-      .title1 {
-        font-family: "Arial Negreta", "Arial Normal", "Arial", sans-serif;
-        font-weight: 700;
-        font-style: normal;
-        font-size: 16px;
-        color: #333333;
-      }
-
-      .title2 {
-        font-family: Arial, sans-serif;
-        font-weight: 400;
-        font-style: normal;
-        font-size: 14px;
-        letter-spacing: normal;
-        color: #2d67b2;
-        border: none;
-      }
-
-      .title2:hover {
-        background-color: white;
-      }
-      .setting-form-item {
-        width: 100%;
-        display: flex;
-        ::v-deep(.el-form-item__label) {
-          font-family: "Arial", sans-serif;
-          font-weight: 400;
-          text-align: left;
-          font-style: normal;
-          letter-spacing: normal;
-          color: #7f7f7f;
-          font-size: 16px;
-        }
-        span {
-          font-family: "Arial", sans-serif;
-          font-weight: 400;
-          font-size: 16px;
-          color: #333333;
+        .iconfont {
+          font-size: 1.25rem;
+          color: #666;
         }
       }
-      .setting-btn {
-        display: flex;
-        justify-content: center;
-        padding-top: 126px;
-        padding-bottom: 20px;
-        .cancel-size,
-        .submit-size {
-          width: 100px;
-          height: 42px;
-        }
+      .close-icon:hover .iconfont {
+        color: #409eff;
       }
     }
-    .head-content {
-      margin-top: 32px;
+  }
+
+  // .el-dialog__body {
+  //   padding: 2rem;
+  // }
+
+  .el-form-item {
+    margin-bottom: 1.5rem;
+  }
+
+  .el-input {
+    .el-input__wrapper {
+      border-radius: 8px;
     }
   }
-}
 
-.dialog-footer {
-  display: flex;
-  justify-content: center;
-}
-
-.form-divider {
-  margin: 30px auto;
-  border-top: 1px solid #f2f2f2;
-}
-.my-header {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 16px;
-  .close-color {
-    color: #999999;
+  .dialog-footer {
+    padding: 1.5rem;
+    // background: #f8f9fa;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
   }
-  .close-icon:hover {
-    .close-color {
-      color: #2d67b2;
-    }
-  }
-  .title {
-    font-family: "Arial Negreta", "Arial Normal", "Arial", sans-serif;
-    font-weight: 700;
-    font-style: normal;
-    text-align: left;
-    line-height: normal;
-  }
-}
-.com-content {
-  display: flex;
-  gap: 10px;
-  align-items: center;
 }
 </style>
