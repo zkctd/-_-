@@ -257,8 +257,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useStore } from "vuex";
 import { ElMessageBox } from "element-plus";
 const router = useRouter();
-const store = useStore();
-const usertype = computed(() => store.state.userInfo.user_type);
+const usertype = Number(localStorage.getItem("usertype"));
 const route = useRoute();
 const examInfo = ref({
   title: "",
@@ -273,6 +272,7 @@ const submit_examaId = ref("");
 const IsshowAnswer = ref();
 const questions = ref([]);
 const answers = ref({});
+const re_answer = ref();
 const currentQuestionIndex = ref(1);
 const showTimer = ref(true);
 const remainingTime = ref(0); // 转换为秒
@@ -312,7 +312,27 @@ const scrollToQuestion = (index) => {
 };
 
 const handleSubmit = () => {
-  ElMessageBox.confirm("确认提交试卷？提交后将无法修改。", "提示", {
+  const unfinishedQuestions = questions.value.filter((question) => {
+    const answer = answers.value[question.index];
+    switch (question.type) {
+      case "single":
+      case "judge":
+        return answer === undefined;
+      case "multiple":
+        return !answer || answer.length === 0;
+      case "short":
+        return !answer || answer.trim() === "";
+    }
+  });
+  let warningMessage = "确认提交试卷？提交后将无法修改。";
+
+  if (unfinishedQuestions.length > 0) {
+    const unfinishedIndexes = unfinishedQuestions
+      .map((q) => q.index)
+      .join(", ");
+    warningMessage = `还有第 ${unfinishedIndexes} 题未完成，确定要提交吗？提交后将无法修改。`;
+  }
+  ElMessageBox.confirm(warningMessage, "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning",
@@ -364,8 +384,14 @@ const handleSubmit = () => {
       })
         .then((response) => {
           if (response.code === 200) {
+            clearAnswers();
             if (IsshowAnswer.value === 1) {
-              router.push("/exam/result");
+              router.push({
+                name: "examResult",
+                query: {
+                  examId: route.query.id,
+                },
+              });
             } else {
               router.push("/MyExmam");
             }
@@ -380,22 +406,71 @@ const handleSubmit = () => {
     });
 };
 
+// 修改 handleReturn 方法
 const handleReturn = () => {
-  if (usertype.value === 1) {
+  if (usertype === 1) {
     router.back();
     return;
   }
-  ElMessageBox.confirm("确认退出考试？退出后答题记录将丢失。", "提示", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning",
-  })
+
+  ElMessageBox.confirm(
+    re_answer.value === 1
+      ? "确认退出考试？当前考试可以多次作答，退出后将保留答题卡记录。"
+      : "确认退出考试？当前考试无法多次作答，退出后答题记录将丢失并记录 0 分且无法再次进入考试！",
+    "提示",
+    {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    }
+  )
     .then(() => {
+      if (re_answer.value === 1) {
+        saveAnswers(); // 保存答题记录
+      }
       router.back();
     })
     .catch(() => {
       // 取消返回
     });
+};
+// 获取答题记录的 localStorage key
+const getAnswerStorageKey = (examId) => `exam_answers_${examId}`;
+
+// 保存答题记录到 localStorage
+const saveAnswers = () => {
+  if (!submit_examaId.value) return;
+
+  const storageKey = getAnswerStorageKey(submit_examaId.value);
+  const answerData = {
+    timestamp: new Date().getTime(),
+    answers: answers.value,
+    remainingTime: remainingTime.value,
+  };
+  localStorage.setItem(storageKey, JSON.stringify(answerData));
+};
+
+// 恢复答题记录
+const restoreAnswers = () => {
+  if (!submit_examaId.value) return;
+
+  const storageKey = getAnswerStorageKey(submit_examaId.value);
+  const savedData = localStorage.getItem(storageKey);
+
+  if (savedData) {
+    const { answers: savedAnswers, remainingTime: savedTime } =
+      JSON.parse(savedData);
+    answers.value = savedAnswers;
+    remainingTime.value = savedTime;
+    return true;
+  }
+  return false;
+};
+
+// 清除答题记录
+const clearAnswers = () => {
+  if (!submit_examaId.value) return;
+  localStorage.removeItem(getAnswerStorageKey(submit_examaId.value));
 };
 
 const processQuestions = (questions, isRandom) => {
@@ -433,15 +508,22 @@ const shuffleArray = (array) => {
   }
   return array;
 };
+
+const parseTimeToSeconds = (timeString) => {
+  const [hours, minutes, seconds] = timeString.split(":").map(Number);
+  return hours * 3600 + minutes * 60 + seconds;
+};
+
 let timer;
 onMounted(async () => {
   let examId;
-  if (usertype.value === 1) {
+  if (usertype === 1) {
     examId = route.query.id;
-  } else if (usertype.value === 0) {
+  } else if (usertype === 0) {
     examId = route.query.paperId;
     submit_examaId.value = route.query.examId;
     IsshowAnswer.value = route.query.showAnswer;
+    re_answer.value = Number(route.query.re_answer);
   }
   try {
     const response = await papersDetail({ id: examId });
@@ -457,7 +539,10 @@ onMounted(async () => {
         shortScore: 0,
       };
 
-      remainingTime.value = examInfo.value.duration * 60; // 转换为秒
+      remainingTime.value =
+        usertype === 1
+          ? data.exam_duration * 60
+          : parseTimeToSeconds(route.query.countdown); // 转换为秒
 
       questions.value = data.questions.map((q, index) => ({
         id: q.question.id,
@@ -487,6 +572,9 @@ onMounted(async () => {
           answers.value[q.index] = "";
         }
       });
+      if (re_answer.value === 1) {
+        restoreAnswers();
+      }
     }
   } catch (error) {
     console.error("获取试卷详情失败:", error);

@@ -12,7 +12,7 @@
       <el-col :span="24">
         <div class="exam-filter">
           <el-radio-group v-model="filterStatus" @change="handleFilterChange">
-            <el-radio-button value="">全部</el-radio-button>
+            <el-radio-button :value="-1">全部</el-radio-button>
             <el-radio-button :value="0">未开始</el-radio-button>
             <el-radio-button :value="1">进行中</el-radio-button>
             <el-radio-button :value="2">已结束</el-radio-button>
@@ -25,7 +25,10 @@
               {{ getStatusText(exam.status) }}
             </div>
             <div class="exam-info">
-              <h3 class="exam-title">{{ exam.title }}</h3>
+              <h3 v-if="exam.order" class="exam-title">
+                {{ exam.title }}(第{{ exam.order }}次重考)
+              </h3>
+              <h3 v-else class="exam-title">{{ exam.title }}</h3>
               <div class="exam-time">
                 <el-icon><Clock /></el-icon>
                 <span style="margin-top: 1px">{{
@@ -54,20 +57,17 @@
               </div>
             </div>
             <div class="exam-actions">
-              <!-- <el-button
-                v-if="exam.status === 0"
-                :disabled="exam.status !== 1"
-                type="primary"
-                @click="handleStartExam(exam)"
-                color="#2D67B2"
-                >开始考试</el-button
-              > -->
-              <el-button
-                v-if="exam.status === 1"
-                type="primary"
-                @click="handleStartExam(exam)"
-                >开始考试</el-button
-              >
+              <template v-if="exam.status === 1">
+                <el-button
+                  v-if="hasUnfinishedExam(exam.id)"
+                  type="warning"
+                  @click="handleContinueExam(exam)"
+                  >继续考试</el-button
+                >
+                <el-button v-else type="primary" @click="handleStartExam(exam)"
+                  >开始考试</el-button
+                >
+              </template>
               <el-button
                 v-if="exam.status === 2"
                 type="info"
@@ -78,26 +78,36 @@
           </div>
         </div>
       </el-col>
-      <div v-if="filteredExams.length === 0" class="no-exams">暂无数据</div>
+      <div v-if="filteredExams.length === 0" class="empty-state">
+        <el-icon class="empty-icon"><Document /></el-icon>
+        <h3 class="empty-title">暂无考试</h3>
+        <p v-if="filterStatus === -1" class="empty-description">
+          当前没有任何考试信息
+        </p>
+        <p v-if="filterStatus === 0" class="empty-description">
+          当前没有任何未开始的考试信息
+        </p>
+        <p v-if="filterStatus === 1" class="empty-description">
+          当前没有任何进行中的考试信息
+        </p>
+        <p v-if="filterStatus === 2" class="empty-description">
+          当前没有任何已结束的考试信息
+        </p>
+      </div>
     </el-row>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import {
-  Clock,
-  CircleCheck,
-  RefreshRight,
-  Document,
-} from "@element-plus/icons-vue";
+import { Clock, RefreshRight, Document } from "@element-plus/icons-vue";
 import dayjs from "dayjs";
 import { myExamList, isTest } from "@/api/index";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
 const examList = ref([]);
-const filterStatus = ref("");
+const filterStatus = ref(-1);
 const statusPriority = {
   1: 0, // 进行中 - 最高优先级
   0: 1, // 未开始 - 次高优先级
@@ -105,15 +115,32 @@ const statusPriority = {
   3: 3, // 异常 - 最低优先级
 };
 // 根据状态过滤考试
+// 修改 filteredExams 计算属性
 const filteredExams = computed(() => {
-  let result = [...examList.value];
-  if (filterStatus.value !== "") {
-    result = result.filter((exam) => exam.status === filterStatus.value);
-  }
-  result.sort((a, b) => {
-    return statusPriority[a.status] - statusPriority[b.status];
+  let result = [];
+
+  examList.value.forEach((exam) => {
+    if (filterStatus.value === -1 || exam.status === filterStatus.value) {
+      result.push(exam);
+    }
+
+    if (exam.children && exam.children.length) {
+      exam.children.forEach((childExam) => {
+        if (
+          filterStatus.value === -1 ||
+          childExam.status === filterStatus.value
+        ) {
+          result.push({
+            ...childExam,
+            isChild: true,
+            title: exam.title,
+          });
+        }
+      });
+    }
   });
 
+  result.sort((a, b) => statusPriority[a.status] - statusPriority[b.status]);
   return result;
 });
 
@@ -145,6 +172,10 @@ const formatTimeRange = (startTime, endTime) => {
   ).format("HH:mm")}`;
 };
 
+const hasUnfinishedExam = (examId) => {
+  return !!localStorage.getItem(`exam_answers_${examId}`);
+};
+
 // 处理考试操作
 const handleStartExam = async (exam) => {
   try {
@@ -159,6 +190,8 @@ const handleStartExam = async (exam) => {
           paperId: exam.paper_id,
           examId: exam.id,
           showAnswer: exam.show_answer,
+          re_answer: exam.re_answer,
+          countdown: response.data.countdown,
         },
       });
     }
@@ -167,8 +200,27 @@ const handleStartExam = async (exam) => {
   }
 };
 
-const handleContinueExam = (exam) => {
-  console.log("继续考试", exam);
+const handleContinueExam = async (exam) => {
+  try {
+    const response = await isTest({
+      user_id: JSON.parse(localStorage.getItem("userInfo")).id,
+      exam_id: exam.id,
+    });
+    if (response.code === 200) {
+      router.push({
+        name: "exam",
+        query: {
+          paperId: exam.paper_id,
+          examId: exam.id,
+          showAnswer: exam.show_answer,
+          re_answer: exam.re_answer,
+          countdown: response.data.countdown,
+        },
+      });
+    }
+  } catch (error) {
+    console.error("无法继续考试:", error);
+  }
 };
 
 const handleViewResult = (exam) => {
@@ -189,9 +241,10 @@ onMounted(async () => {
     const response = await myExamList({
       user_id: JSON.parse(localStorage.getItem("userInfo")).id,
     });
-    examList.value = response.data.data;
+    examList.value = response.data || [];
   } catch (error) {
     console.error("获取我的考试列表失败:", error);
+    examList.value = [];
   }
 });
 </script>
@@ -214,7 +267,7 @@ onMounted(async () => {
   .exam-content {
     background-color: #fff;
     padding: 30px 40px;
-    min-height: calc(100vh - 120px);
+    min-height: calc(100vh - 140px);
 
     .exam-filter {
       margin-bottom: 24px;
@@ -335,12 +388,74 @@ onMounted(async () => {
   }
 }
 
-.no-exams {
+.empty-state {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   position: absolute;
   top: 50%;
   left: 50%;
-  color: #999;
-  font-size: 16px;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding: 32px;
+
+  .empty-icon {
+    font-size: 64px;
+    color: #e5e5ea;
+    margin-bottom: 16px;
+
+    // 添加微妙的动画效果
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .empty-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1c1c1e;
+    margin-bottom: 8px;
+
+    // iOS 系统字体
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  }
+  .empty-description {
+    font-size: 16px;
+    color: #8e8e93;
+    margin: 0;
+
+    // iOS 系统字体
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  }
+}
+
+// 添加浮动动画
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+// 确保空状态在小屏幕上也能正确显示
+@media (max-width: 768px) {
+  .empty-state {
+    padding: 24px;
+
+    .empty-icon {
+      font-size: 48px;
+    }
+
+    .empty-title {
+      font-size: 20px;
+    }
+
+    .empty-description {
+      font-size: 14px;
+    }
+  }
 }
 </style>

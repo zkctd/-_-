@@ -1,5 +1,3 @@
-import MyExam from "~/views/User/MyExam.vue";
-
 export const modules = {
   top: () => import("../views/top/Top.vue"),
   user: () => import("../views/system/User.vue"),
@@ -7,4 +5,5 @@ export const modules = {
   testpaper: () => import("../views/system/TestPaper.vue"),
   examination: () => import("../views/system/Examination.vue"),
   myexmam: () => import("../views/User/MyExam.vue"),
+  errorquestion: () => import("../views/User/ErrorQuestion.vue"),
 };

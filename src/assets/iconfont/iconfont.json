@@ -6,6 +6,13 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "14888729",
+      "name": "错题集",
+      "font_class": "cuotiji",
+      "unicode": "e678",
+      "unicode_decimal": 59000
+    },
+    {
       "icon_id": "26236666",
       "name": "返回",
       "font_class": "fanhui",

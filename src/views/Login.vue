@@ -216,6 +216,10 @@ const submitForm = async (loginForm) => {
         userInfo.value.password = null;
       }
       localStorage.setItem("userInfo", JSON.stringify(response.data.userInfo));
+      localStorage.setItem(
+        "usertype",
+        JSON.stringify(response.data.userInfo.user_type)
+      );
       localStorage.setItem("TOKEN", response.data.token.access);
       localStorage.setItem("refreshToken", response.data.token.refresh);
       // 获取菜单数据

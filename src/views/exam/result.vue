@@ -92,8 +92,11 @@
               :id="`question-${question.index}`"
               class="question-item"
               :class="{
-                correct: isCorrect(question),
-                wrong: isWrong(question),
+                correct: isMultipleChoiceCorrect(question),
+                wrong:
+                  !isMultipleChoicePartialCorrect(question) &&
+                  !isMultipleChoiceCorrect(question),
+                partial: isMultipleChoicePartialCorrect(question),
               }"
             >
               <div class="question-header">
@@ -101,12 +104,12 @@
                 <div class="question-content">{{ question.topic }}</div>
                 <div class="score-info">
                   （{{ question.score }}分）
-                  <span class="question-result" v-if="isCorrect(question)"
-                    >✓</span
+                  <span
+                    class="question-result"
+                    :class="getMultipleChoiceResultClass(question)"
                   >
-                  <span class="question-result wrong" v-if="isWrong(question)"
-                    >✗</span
-                  >
+                    {{ getMultipleChoiceResultIcon(question) }}
+                  </span>
                 </div>
               </div>
               <div class="options-list">
@@ -123,10 +126,9 @@
                       question,
                       option.value
                     ),
-                    'wrong-answer': isMultipleWrongAnswer(
-                      question,
-                      option.value
-                    ),
+                    'partial-correct':
+                      isMultipleOptionSelected(question, option.value) &&
+                      isMultipleCorrectAnswer(question, option.value),
                   }"
                 >
                   {{ String.fromCharCode(65 + optIndex) }}. {{ option.text }}
@@ -211,12 +213,20 @@
               :key="question.id"
               :id="`question-${question.index}`"
               class="question-item"
+              :class="getShortAnswerClass(question)"
             >
               <div class="question-header">
                 <span class="question-index">{{ question.index }}.</span>
                 <div class="question-content">{{ question.topic }}</div>
                 <div class="score-info">
                   （{{ question.score }}分）
+                  <span
+                    v-if="question.userScore !== undefined"
+                    class="question-result"
+                    :class="getShortAnswerResultClass(question)"
+                  >
+                    {{ getShortAnswerResultIcon(question) }}
+                  </span>
                   <span
                     v-if="question.userScore !== undefined"
                     class="user-score"
@@ -275,7 +285,7 @@
               <span class="value correct">{{ correctCount }}</span>
             </div>
             <div class="stat-item">
-              <span class="label">错误</span>
+              <span class="label">错误（包含不完全正确）</span>
               <span class="value wrong">{{ wrongCount }}</span>
             </div>
           </div>
@@ -351,7 +361,44 @@ const isMultipleOptionSelected = (question, optionValue) => {
   const userAnswer = userAnswers.value[question.index];
   return userAnswer?.split(";").includes(optionValue.toString());
 };
+const isMultipleChoiceCorrect = (question) => {
+  const userAnswer = new Set(
+    userAnswers.value[question.index]?.split(";") || []
+  );
+  const correctAnswer = new Set(
+    correctAnswers.value[question.index]?.split(";") || []
+  );
+  return (
+    userAnswer.size === correctAnswer.size &&
+    [...userAnswer].every((value) => correctAnswer.has(value))
+  );
+};
 
+// 判断多选题是否部分正确
+const isMultipleChoicePartialCorrect = (question) => {
+  const userAnswer = new Set(
+    userAnswers.value[question.index]?.split(";") || []
+  );
+  const correctAnswer = new Set(
+    correctAnswers.value[question.index]?.split(";") || []
+  );
+  const hasCommon = [...userAnswer].some((value) => correctAnswer.has(value));
+  return hasCommon && !isMultipleChoiceCorrect(question);
+};
+
+// 获取多选题结果图标
+const getMultipleChoiceResultIcon = (question) => {
+  if (isMultipleChoiceCorrect(question)) return "✓";
+  if (isMultipleChoicePartialCorrect(question)) return "O";
+  return "✗";
+};
+
+// 获取多选题结果样式类
+const getMultipleChoiceResultClass = (question) => {
+  if (isMultipleChoiceCorrect(question)) return "correct";
+  if (isMultipleChoicePartialCorrect(question)) return "partial";
+  return "wrong";
+};
 const isMultipleCorrectAnswer = (question, optionValue) => {
   const correctAnswer = correctAnswers.value[question.index];
   return correctAnswer?.split(";").includes(optionValue.toString());
@@ -372,17 +419,45 @@ const isWrongAnswer = (question, optionValue) => {
 };
 // 统计数据计算
 const correctCount = computed(() => {
-  return questions.value.filter((q) => q.type !== "short" && isCorrect(q))
-    .length;
+  return questions.value.filter((q) => {
+    if (q.type === "short") {
+      // 简答题根据得分判断
+      return q.userScore === q.score;
+    }
+    return isCorrect(q);
+  }).length;
 });
 const wrongCount = computed(() => {
-  return questions.value.filter((q) => q.type !== "short" && !isCorrect(q))
-    .length;
+  return questions.value.filter((q) => {
+    if (q.type === "short") {
+      // 简答题有得分但不是满分算错误
+      return q.userScore !== undefined && q.userScore < q.score;
+    }
+    return !isCorrect(q);
+  }).length;
 });
 
-const missedCount = computed(() => {
-  return questions.value.length - Object.keys(userAnswers.value).length;
-});
+// 获取简答题状态样式类
+const getShortAnswerClass = (question) => {
+  if (question.userScore === undefined) return "";
+  if (question.userScore === question.score) return "correct";
+  if (question.userScore === 0) return "wrong";
+  return "partial"; // 部分得分
+};
+
+// 获取简答题结果图标
+const getShortAnswerResultIcon = (question) => {
+  if (question.userScore === question.score) return "✓";
+  if (question.userScore === 0) return "✗";
+  return "O"; // 部分得分使用空心圆
+};
+
+// 获取简答题结果样式类
+const getShortAnswerResultClass = (question) => {
+  if (question.userScore === question.score) return "";
+  if (question.userScore === 0) return "wrong";
+  return "partial";
+};
 
 // 获取分数对应的颜色
 const getScoreColor = (percentage) => {
@@ -396,7 +471,7 @@ const formatExamTime = (startTime, endTime) => {
 };
 
 const handleReturn = () => {
-  router.back();
+  router.push("/MyExmam");
 };
 
 const processExamData = (data) => {
@@ -409,11 +484,50 @@ const processExamData = (data) => {
     paper_total_score: data.paper_total_score,
   };
 
-  // 处理题目信息
-  questions.value = data.card.map((item, index) => {
+  let questionIndex = 1;
+
+  // 处理单选题
+  const singleQuestions = data.card
+    .filter((item) => item.questionsInfo.type === "single")
+    .map((item) => ({
+      ...item,
+      displayIndex: questionIndex++,
+    }));
+
+  // 处理多选题
+  const multipleQuestions = data.card
+    .filter((item) => item.questionsInfo.type === "multiple")
+    .map((item) => ({
+      ...item,
+      displayIndex: questionIndex++,
+    }));
+
+  // 处理判断题
+  const judgeQuestions = data.card
+    .filter((item) => item.questionsInfo.type === "judge")
+    .map((item) => ({
+      ...item,
+      displayIndex: questionIndex++,
+    }));
+
+  // 处理简答题
+  const shortQuestions = data.card
+    .filter((item) => item.questionsInfo.type === "short")
+    .map((item) => ({
+      ...item,
+      displayIndex: questionIndex++,
+    }));
+
+  // 合并所有题目并处理
+  questions.value = [
+    ...singleQuestions,
+    ...multipleQuestions,
+    ...judgeQuestions,
+    ...shortQuestions,
+  ].map((item) => {
     const baseQuestion = {
       id: item.questionsInfo.id,
-      index: index + 1,
+      index: item.displayIndex, // 使用新的displayIndex
       type: item.questionsInfo.type,
       topic: item.questionsInfo.topic,
       score: item.questionsInfo.score,
@@ -442,20 +556,23 @@ const processExamData = (data) => {
       case "short":
         return {
           ...baseQuestion,
-          options: [], // 简答题没有选项
+          options: [],
         };
       default:
         return baseQuestion;
     }
   });
 
-  // 处理用户答案和正确答案
-  data.card.forEach((item, index) => {
-    userAnswers.value[index + 1] = item.solution;
-    correctAnswers.value[index + 1] =
-      item.questionsInfo.type === "short"
-        ? item.questionsInfo.keywords
-        : item.questionsInfo.answer;
+  // 更新答案映射
+  questions.value.forEach((question) => {
+    const originalItem = data.card.find(
+      (item) => item.questionsInfo.id === question.id
+    );
+    userAnswers.value[question.index] = originalItem.solution;
+    correctAnswers.value[question.index] =
+      originalItem.questionsInfo.type === "short"
+        ? originalItem.questionsInfo.keywords
+        : originalItem.questionsInfo.answer;
   });
 };
 
@@ -539,6 +656,17 @@ onMounted(async () => {
           margin-bottom: 16px;
         }
 
+        &.partial {
+          background: #fdf6ec;
+          border-left-color: #e6a23c;
+        }
+
+        .question-result {
+          &.partial {
+            color: #e6a23c;
+          }
+        }
+
         &.correct {
           background: #f0f9eb;
           border-left-color: #67c23a;
@@ -588,6 +716,16 @@ onMounted(async () => {
             color: #f56c6c;
             border: 1px solid #f56c6c;
           }
+          &.user-selected {
+            font-weight: bold;
+            border-width: 2px;
+          }
+
+          &.partial-correct {
+            background: #fdf6ec;
+            color: #e6a23c;
+            border-color: #e6a23c;
+          }
         }
 
         .answer-analysis {
@@ -606,6 +744,27 @@ onMounted(async () => {
             color: #333;
             line-height: 1.6;
           }
+        }
+      }
+      &.partial {
+        background: #fdf6ec;
+        border-left-color: #e6a23c;
+      }
+
+      .question-result {
+        margin-left: 8px;
+        font-weight: bold;
+
+        &:not(.wrong):not(.partial) {
+          color: #67c23a;
+        }
+
+        &.wrong {
+          color: #f56c6c;
+        }
+
+        &.partial {
+          color: #e6a23c;
         }
       }
     }

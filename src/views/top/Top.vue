@@ -33,7 +33,7 @@
               <span>待办事项</span>
               <strong>{{ pendingTasks || 0 }}</strong>
             </div>
-            <div class="stat-item">
+            <div v-if="userInfo.user_type === 0" class="stat-item">
               <el-icon><Document /></el-icon>
               <span>总考试数</span>
               <strong>{{ totalExams || 0 }}</strong>
@@ -100,7 +100,7 @@ import { getMenuListData } from "@/api/auth.ts";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 const store = useStore();
-const usertype = computed(() => store.state.userInfo.user_type);
+const usertype = Number(localStorage.getItem("usertype"));
 const userInfo = ref({
   id: "",
   username: "",
@@ -155,7 +155,7 @@ const getUserResourceInfo = async () => {
 const pendingTasks = ref(0);
 const totalExams = ref(0);
 const features = computed(() => {
-  return usertype.value === 1
+  return usertype === 1
     ? [
         {
           id: 1,
@@ -292,7 +292,7 @@ const toRoute = (item) => {
 .dashboard-container {
   padding: 20px;
   background-color: #f5f7fa;
-  min-height: 100vh;
+  min-height: calc(100vh - 112px);
 
   .welcome-section {
     margin-bottom: 24px;

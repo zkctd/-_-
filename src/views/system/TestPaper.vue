@@ -125,7 +125,7 @@
               width="100"
               show-overflow-tooltip
             ></el-table-column>
-            <el-table-column label="操作" min-width="270px">
+            <el-table-column label="操作" min-width="270px" fixed="right">
               <template #default="{ row }">
                 <el-button
                   v-if="row.status === false"
@@ -342,6 +342,7 @@
         border
         size="small"
         @selection-change="handleQuestionSelectionChange"
+        :default-sort="{ prop: 'difficulty', order: 'descending' }"
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="topic" label="题目" show-overflow-tooltip>
@@ -841,15 +842,67 @@ onMounted(async () => {
       }
       .el-table {
         flex: 1 1 auto;
+        border-radius: 12px;
+        box-shadow: 0 1px 20px rgba(0, 0, 0, 0.05);
+        border: none;
+        overflow: hidden;
+
+        // 表头样式
         ::v-deep(thead th) {
-          font-weight: 400;
-          color: #333333;
+          font-weight: 500;
+          color: #1c1c1e;
+          background-color: #ffffff;
+          border-bottom: 1px solid rgba(60, 60, 67, 0.1);
+          transition: background-color 0.2s;
         }
+
+        // 表格行样式
         ::v-deep(tr) {
-          color: #333333;
+          color: #1c1c1e;
+          transition: background-color 0.2s;
+
+          &:hover {
+            background-color: rgba(0, 122, 255, 0.05);
+          }
         }
-        ::v-deep(.el-popper) {
-          max-width: 50%;
+        // 单元格样式
+        ::v-deep(td) {
+          border-bottom: 1px solid rgba(60, 60, 67, 0.1);
+        }
+
+        // 去除表格边框
+        ::v-deep(.el-table__inner-wrapper::before),
+        ::v-deep(.el-table__inner-wrapper::after) {
+          display: none;
+        }
+
+        // 标签样式优化
+        ::v-deep(.el-tag) {
+          border-radius: 6px;
+          padding: 4px 8px;
+          font-weight: 500;
+
+          &.el-tag--success {
+            background-color: rgba(52, 199, 89, 0.1);
+            color: #34c759;
+            border: none;
+          }
+
+          &.el-tag--warning {
+            background-color: rgba(255, 149, 0, 0.1);
+            color: #ff9500;
+            border: none;
+          }
+
+          &.el-tag--danger {
+            background-color: rgba(255, 59, 48, 0.1);
+            color: #ff3b30;
+            border: none;
+          }
+        }
+        // 操作按钮样式
+        ::v-deep(.el-button.is-link) {
+          font-weight: 500;
         }
       }
       .el-table-column--description {

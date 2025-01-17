@@ -93,6 +93,7 @@
             :row-class-name="tableRowClassName"
             :select-on-indeterminate="true"
             :default-sort="{ prop: 'status', order: 'descending' }"
+            row-key="id"
           >
             <el-table-column
               type="selection"
@@ -104,7 +105,14 @@
               label="考试名称"
               width="200"
               show-overflow-tooltip
-            />
+            >
+              <template #default="{ row }">
+                <span v-if="row.parent">
+                  {{ `${row.title}(重考第${row.order}次)` }}
+                </span>
+                <span v-else>{{ row.title }}</span>
+              </template>
+            </el-table-column>
             <el-table-column
               prop="start_time"
               label="开始时间"
@@ -148,9 +156,7 @@
                   :key="dept.id"
                   type="info"
                   style="margin-right: 5px"
-                  v-if="
-                    row.number === 0 || (row.number === 1 && row.status === 3)
-                  "
+                  v-if="!row.parent"
                   >{{ dept.name }}</el-tag
                 >
                 <div v-else>-</div>
@@ -163,7 +169,7 @@
                   :key="user.id"
                   type="info"
                   style="margin-right: 5px"
-                  v-if="row.number !== 0"
+                  v-if="row.parent"
                   >{{ user.name }}</el-tag
                 >
                 <div v-else>-</div>
@@ -190,17 +196,17 @@
               </template>
             </el-table-column>
             <el-table-column prop="number" label="已考次数" width="100" />
-            <el-table-column label="操作" min-width="250px">
+            <el-table-column label="操作" min-width="250px" fixed="right">
               <template #default="{ row }">
                 <el-button
-                  v-if="row.status === 2"
+                  v-if="row.status === 2 && !row.parent"
                   type="primary"
                   @click="handleExamDetail(row)"
                   link
                   >查看考试详情</el-button
                 >
                 <el-button
-                  v-if="row.status === 2"
+                  v-if="row.status === 2 && !row.parent"
                   type="primary"
                   @click="handleRestart(row)"
                   link
@@ -346,7 +352,7 @@
           prop="title"
           label-position="left"
           class="exam-form-item"
-          v-if="examInfoForm.number === 0"
+          v-if="!examInfoForm.parent"
         >
           <el-checkbox-group v-model="examInfoForm.departments">
             <el-checkbox
@@ -363,7 +369,7 @@
           prop="title"
           label-position="left"
           class="exam-form-item"
-          v-if="examInfoForm.number !== 0 && examInfoForm.id"
+          v-if="examInfoForm.parent && examInfoForm.id"
         >
           <div class="add-retake-user">
             <el-button type="primary" @click="showRetakeUserDialog"
@@ -485,6 +491,16 @@
             disabled
             style="width: 220px"
           />
+          <el-popover
+            placement="right"
+            :width="260"
+            trigger="click"
+            :content="`结束时间为开始时间加上试卷时长，当前选择试卷的时长为：${restartForm.duration}分钟`"
+          >
+            <template #reference>
+              <el-button link icon="QuestionFilled" circle size="large" />
+            </template>
+          </el-popover>
         </el-form-item>
         <el-form-item
           label="重考人员"
@@ -501,7 +517,7 @@
             :data="restartForm.users"
             border
             size="small"
-            max-height="400"
+            max-height="150"
           >
             <el-table-column prop="name" label="姓名"></el-table-column>
             <el-table-column prop="depart" label="所属部门"></el-table-column>
@@ -539,6 +555,7 @@
         size="small"
         @selection-change="handleRetakeUserSelectionChange"
         max-height="500"
+        :default-sort="{ prop: 'depart', order: 'descending' }"
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="name" label="姓名">
@@ -551,7 +568,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="depart" label="所属部门" />
+        <el-table-column prop="depart" label="所属部门" sortable />
       </el-table>
       <template #footer>
         <span class="dialog-footer">
@@ -790,6 +807,7 @@ const handleAddExam = async () => {
     departments: [],
     users: [],
     number: 0,
+    parent: "",
   };
   // 获取下拉框试卷列表
   try {
@@ -950,6 +968,7 @@ const handleEdit = async (row) => {
         departments: response.data.departments.map((dept) => dept.id),
         users: response.data.users || [],
         number: response.data.number,
+        parent: response.data.parent,
       };
       editExamDialogVisible.value = true;
     } else {
@@ -1022,7 +1041,7 @@ const submitRestart = async () => {
           id: restartForm.value.id,
           start_time: restartForm.value.start_time,
           end_time: restartForm.value.end_time,
-          users: restartForm.value.users,
+          users: restartForm.value.users.map((user) => user.id),
         });
         if (response.code === 200) {
           ElMessage.success("重启成功!");
@@ -1159,15 +1178,67 @@ onMounted(() => {
       }
       .el-table {
         flex: 1 1 auto;
+        border-radius: 12px;
+        box-shadow: 0 1px 20px rgba(0, 0, 0, 0.05);
+        border: none;
+        overflow: hidden;
+
+        // 表头样式
         ::v-deep(thead th) {
-          font-weight: 400;
-          color: #333333;
+          font-weight: 500;
+          color: #1c1c1e;
+          background-color: #ffffff;
+          border-bottom: 1px solid rgba(60, 60, 67, 0.1);
+          transition: background-color 0.2s;
         }
+
+        // 表格行样式
         ::v-deep(tr) {
-          color: #333333;
+          color: #1c1c1e;
+          transition: background-color 0.2s;
+
+          &:hover {
+            background-color: rgba(0, 122, 255, 0.05);
+          }
         }
-        ::v-deep(.el-popper) {
-          max-width: 50%;
+        // 单元格样式
+        ::v-deep(td) {
+          border-bottom: 1px solid rgba(60, 60, 67, 0.1);
+        }
+
+        // 去除表格边框
+        ::v-deep(.el-table__inner-wrapper::before),
+        ::v-deep(.el-table__inner-wrapper::after) {
+          display: none;
+        }
+
+        // 标签样式优化
+        ::v-deep(.el-tag) {
+          border-radius: 6px;
+          padding: 4px 8px;
+          font-weight: 500;
+
+          &.el-tag--success {
+            background-color: rgba(52, 199, 89, 0.1);
+            color: #34c759;
+            border: none;
+          }
+
+          &.el-tag--warning {
+            background-color: rgba(255, 149, 0, 0.1);
+            color: #ff9500;
+            border: none;
+          }
+
+          &.el-tag--danger {
+            background-color: rgba(255, 59, 48, 0.1);
+            color: #ff3b30;
+            border: none;
+          }
+        }
+        // 操作按钮样式
+        ::v-deep(.el-button.is-link) {
+          font-weight: 500;
         }
       }
     }

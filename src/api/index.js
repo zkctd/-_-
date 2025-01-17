@@ -157,6 +157,18 @@ export const createExam = (params) => {
 export const resultCreat = (params) => {
   return post("/users/submitCard/", params);
 };
+
+export const gradesCreate = (params) => {
+  return post("/grades/create/", params);
+};
+
+export const create_correct = (params) => {
+  return post("/grades/create_correct/", params);
+};
+
+export const gradesDetail = (params) => {
+  return post("/grades/detail/", params);
+};
 // PUT
 export const editorUser = (params) => {
   return put("users/editorUser/", params);

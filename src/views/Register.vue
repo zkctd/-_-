@@ -4,7 +4,7 @@
       <el-header>
         <div class="left-content">
           <!-- logo显示区域 -->
-          <img style="max-width: 70px" src="/images/common/logo.png" alt="" />
+          <img src="/images/common/logo.png" alt="" />
           <!-- 面包屑导航区域 -->
           <span class="nav-text">翔东渝内部考试系统</span>
         </div>
@@ -378,120 +378,287 @@ watch(
   }
 );
 </script>
-
 <style lang="less" scoped>
 .el-container {
-  background-color: #f0f1f6;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+  min-height: 100vh;
 }
 
 .el-header {
-  min-height: 72px;
-  width: 100vw;
-  background: inherit;
-  border: 0 none;
-  margin-bottom: 10px;
-  background-color: rgba(255, 255, 255, 1);
-  box-shadow: 0 1px 10px rgba(228, 228, 228, 1);
-  z-index: 99;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 22px;
-  .right-content {
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  width: 100%;
+  z-index: 100;
+  padding: 0 40px;
+
+  .left-content {
+    height: 100%;
     display: flex;
     align-items: center;
-    .user-image {
-      display: block;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      margin-right: 10px;
+    text-align: center;
+    gap: 1rem;
+
+    img {
+      max-width: 40px;
+      height: auto;
+      transition: transform 0.3s ease;
+      &:hover {
+        transform: scale(1.05);
+      }
     }
-    .user-name {
-      font-family: "Arial", sans-serif;
-      font-weight: 400;
-      font-style: normal;
-      letter-spacing: normal;
-      color: #333333;
-      line-height: normal;
-      white-space: nowrap;
-      text-transform: none;
-      font-size: 14px;
-      text-align: left;
+
+    .nav-text {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif;
+      font-size: 20px;
+      font-weight: 500;
+      color: #1a1a1a;
+      margin-left: 16px;
     }
-  }
-}
-.el-main {
-  width: 100vw;
-  background-color: rgba(255, 255, 255, 1);
-  display: flex;
-  justify-content: center;
-}
-.left-content {
-  min-height: 72px;
-  width: 100vw;
-  display: flex;
-  align-items: center;
-  img {
-    margin-right: 14px;
-  }
-  .nav-text {
-    font-family: "微软雅黑", sans-serif;
-    font-weight: 400;
-    font-style: normal;
-    font-size: 18px;
-    color: rgba(51, 51, 51, 0.996);
   }
 }
 
+.el-main {
+  padding-top: 92px;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
 .register-container {
-  width: auto;
-  height: auto;
-  border: none;
-  margin: 36px auto;
-  .reg-form-item {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 24px;
-    ::v-deep(.el-form-item__label) {
-      font-family: "Arial", sans-serif;
-      font-weight: 400;
-      text-align: left;
-      font-style: normal;
-      letter-spacing: normal;
-      color: #555555;
-      font-size: 18px;
-      line-height: 20px;
-      height: 40px;
-    }
-    .view-password {
-      cursor: pointer;
-    }
+  max-width: 560px;
+  width: 90%;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  padding: 40px;
+  margin: 20px auto;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.12);
   }
+
   .register-title {
-    letter-spacing: 0;
-    line-height: normal;
-    font-family: "Arial Negreta", "Arial Normal", "Arial", sans-serif;
-    font-weight: 700;
-    font-style: normal;
-    font-size: 18px;
-    color: #333333;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      sans-serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: #1a1a1a;
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 40px;
+    position: relative;
+
+    &:after {
+      content: "";
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 3px;
+      background: #2d67b2;
+      border-radius: 2px;
+    }
   }
-  .el-input {
-    width: 738px;
-    height: 42px;
+
+  .reg-form-item {
+    margin-bottom: 24px;
+
+    ::v-deep(.el-form-item__label) {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 8px;
+      height: 24px;
+      line-height: 24px;
+    }
+
+    .el-input {
+      width: 100%;
+      --el-input-height: 48px;
+
+      ::v-deep(.el-input__wrapper) {
+        background-color: #f9fafb;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        padding: 0 16px;
+        transition: all 0.3s ease;
+
+        &:hover {
+          border-color: #2d67b2;
+          background-color: #fff;
+        }
+
+        &.is-focus {
+          border-color: #2d67b2;
+          box-shadow: 0 0 0 3px rgba(45, 103, 178, 0.1);
+          background-color: #fff;
+        }
+      }
+
+      ::v-deep(.el-input__inner) {
+        font-size: 16px;
+        color: #1a1a1a;
+        height: 46px;
+
+        &::placeholder {
+          color: #9ca3af;
+        }
+      }
+    }
+
+    .view-password {
+      color: #6b7280;
+      cursor: pointer;
+      padding: 4px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        color: #2d67b2;
+      }
+    }
+
+    // 验证码按钮样式
+    ::v-deep(.el-button) {
+      height: 32px;
+      padding: 0 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+
+      &:not(.is-disabled):hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(45, 103, 178, 0.2);
+      }
+
+      &.is-disabled {
+        background-color: #e5e7eb;
+        border-color: #e5e7eb;
+        color: #9ca3af;
+      }
+    }
   }
+
   .register-btn {
     display: flex;
+    gap: 16px;
     justify-content: center;
-    padding-top: 20px;
-    .cancel-size,
-    .submit-size {
-      width: 100px;
-      height: 42px;
+    margin-top: 40px;
+
+    .submit-size,
+    .cancel-size {
+      min-width: 140px;
+      height: 48px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
     }
+
+    .submit-size {
+      background: #2d67b2;
+
+      &:hover {
+        background: #1e4b8f;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(45, 103, 178, 0.2);
+      }
+    }
+
+    .cancel-size {
+      border: 2px solid #2d67b2;
+
+      &:hover {
+        background: rgba(45, 103, 178, 0.1);
+        color: #2d67b2;
+        transform: translateY(-2px);
+      }
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .el-header {
+    padding: 0 20px;
+  }
+
+  .register-container {
+    padding: 30px 20px;
+    margin: 10px;
+
+    .register-title {
+      font-size: 24px;
+      margin-bottom: 30px;
+    }
+
+    .reg-form-item {
+      margin-bottom: 20px;
+    }
+
+    .register-btn {
+      flex-direction: column;
+
+      .submit-size,
+      .cancel-size {
+        width: 100%;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// 添加表单动画效果
+.reg-form-item {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.5s ease forwards;
+  .generate-delays(7);
+}
+
+.generate-delays(@n, @i: 1) when (@i =< @n) {
+  &:nth-child(@{i}) {
+    animation-delay: (@i * 0.1s);
+  }
+  .generate-delays(@n, (@i + 1));
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// 添加输入框聚焦特效
+.el-input:focus-within {
+  ::v-deep(.el-input__wrapper) {
+    animation: inputPulse 0.3s ease;
+  }
+}
+
+@keyframes inputPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 </style>

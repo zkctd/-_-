@@ -30,22 +30,22 @@
           router.push({ name: 'UserPaperDetail', query: { examId: exam.id } })
         "
       >
-        <div class="exam-title">第{{ index + 1 }}次考试</div>
+        <div class="exam-title">{{ getExamTitle(exam) }}</div>
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-value">{{ exam.averageScore }}</div>
+            <div class="stat-value">{{ exam.average_score }}</div>
             <div class="stat-label">平均分</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ exam.passRate }}%</div>
+            <div class="stat-value">{{ exam.pass_rate }}%</div>
             <div class="stat-label">通过率</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ exam.expectedStudents }}</div>
+            <div class="stat-value">{{ exam.should_num }}</div>
             <div class="stat-label">应参考人数</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ exam.actualStudents }}</div>
+            <div class="stat-value">{{ exam.actual_num }}</div>
             <div class="stat-label">实际参考人数</div>
           </div>
         </div>
@@ -53,50 +53,66 @@
     </div>
 
     <!-- 图表区域 -->
-    <div class="charts-container">
+    <div class="charts-container" v-if="examList.length > 1">
       <div class="chart" ref="averageScoreChart"></div>
       <div class="chart" ref="passRateChart"></div>
       <div class="chart" ref="errorRateChart"></div>
     </div>
+    <div
+      class="charts-container"
+      v-else
+      style="height: calc(100vh - 530px)"
+    ></div>
   </div>
 </template>
 
 <script setup>
 import * as echarts from "echarts";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { gradesCreate } from "@/api/index";
 const router = useRouter();
+const route = useRoute();
 const averageScoreChart = ref(null);
 const passRateChart = ref(null);
 const errorRateChart = ref(null);
-const examList = ref([
-  {
-    id: 1,
-    averageScore: 85.5,
-    passRate: 92,
-    expectedStudents: 100,
-    actualStudents: 98,
-    errorRates: [30, 45, 25, 60, 35],
-  },
-  {
-    id: 2,
-    averageScore: 82.3,
-    passRate: 88,
-    expectedStudents: 100,
-    actualStudents: 95,
-    errorRates: [25, 40, 30, 55, 40],
-  },
-  {
-    id: 3,
-    averageScore: 87.8,
-    passRate: 94,
-    expectedStudents: 100,
-    actualStudents: 97,
-    errorRates: [20, 35, 28, 50, 30],
-  },
-]);
+const examList = ref([]);
+let averageScoreInstance = null;
+let passRateInstance = null;
+
+// 添加resize监听
+const handleResize = () => {
+  averageScoreInstance?.resize();
+  passRateInstance?.resize();
+};
+const gradesCreates = async () => {
+  try {
+    const res = await gradesCreate({ exam_id: route.query.id });
+    if (res.code === 200) {
+      examList.value = res.data;
+    }
+  } catch (error) {
+    console.error("获取考试数据失败:", error);
+  }
+};
+
+const getExamTitle = (exam) => {
+  if (exam.order === 1) {
+    return exam.exam_title;
+  }
+  return `${exam.exam_title}（重考第${exam.order - 1}次）`;
+};
 
 const initCharts = () => {
+  if (!examList.value || examList.value.length === 1) {
+    return;
+  }
+  const questionCount = examList.value[0].errorRates.length;
+  const questionLabels = Array.from(
+    { length: questionCount },
+    (_, i) => `题目${i + 1}`
+  );
+
   // 平均分趋势图
   const averageScoreInstance = echarts.init(averageScoreChart.value);
   averageScoreInstance.setOption({
@@ -104,7 +120,21 @@ const initCharts = () => {
     tooltip: { trigger: "axis" },
     xAxis: {
       type: "category",
-      data: examList.value.map((_, index) => `第${index + 1}次`),
+      data: examList.value.map((exam) => getExamTitle(exam)),
+      axisLabel: {
+        interval: 0, // 强制显示所有标签
+        rotate: 15, // 旋转标签
+        textStyle: {
+          overflow: "truncate", // 超出显示省略号
+          width: 100, // 限制标签宽度
+        },
+        formatter: function (value) {
+          if (value.length > 15) {
+            return value.slice(0, 15) + "...";
+          }
+          return value;
+        },
+      },
     },
     yAxis: {
       type: "value",
@@ -112,7 +142,7 @@ const initCharts = () => {
     },
     series: [
       {
-        data: examList.value.map((exam) => exam.averageScore),
+        data: examList.value.map((exam) => exam.average_score),
         type: "line",
         smooth: true,
         label: {
@@ -130,7 +160,21 @@ const initCharts = () => {
     tooltip: { trigger: "axis" },
     xAxis: {
       type: "category",
-      data: examList.value.map((_, index) => `第${index + 1}次`),
+      data: examList.value.map((exam) => getExamTitle(exam)),
+      axisLabel: {
+        interval: 0, // 强制显示所有标签
+        rotate: 15, // 旋转标签
+        textStyle: {
+          overflow: "truncate", // 超出显示省略号
+          width: 100, // 限制标签宽度
+        },
+        formatter: function (value) {
+          if (value.length > 15) {
+            return value.slice(0, 15) + "...";
+          }
+          return value;
+        },
+      },
     },
     yAxis: {
       type: "value",
@@ -141,7 +185,7 @@ const initCharts = () => {
     },
     series: [
       {
-        data: examList.value.map((exam) => exam.passRate),
+        data: examList.value.map((exam) => exam.pass_rate),
         type: "bar",
         barWidth: "40%",
         label: {
@@ -159,11 +203,11 @@ const initCharts = () => {
     title: { text: "各题错误率对比" },
     tooltip: { trigger: "axis" },
     legend: {
-      data: examList.value.map((_, index) => `第${index + 1}次`),
+      data: examList.value.map((exam) => getExamTitle(exam)),
     },
     xAxis: {
       type: "category",
-      data: ["题目1", "题目2", "题目3", "题目4", "题目5"],
+      data: questionLabels,
     },
     yAxis: {
       type: "value",
@@ -171,18 +215,33 @@ const initCharts = () => {
         formatter: "{value}%",
       },
     },
-    series: examList.value.map((exam, index) => ({
-      name: `第${index + 1}次`,
+    series: examList.value.map((exam) => ({
+      name: getExamTitle(exam),
       type: "line",
-      data: exam.errorRates,
+      data: exam.errorRates.map((rate) => 100 - rate),
+      smooth: true,
+      symbol: "circle",
+      symbolSize: 8,
+      label: {
+        show: true,
+        position: "top",
+        formatter: "{c}%",
+        fontSize: 12,
+      },
     })),
   });
 };
-
-onMounted(() => {
+onMounted(async () => {
+  await gradesCreates();
   initCharts();
+  window.addEventListener("resize", handleResize);
 });
 
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+  averageScoreInstance?.dispose();
+  passRateInstance?.dispose();
+});
 const exportToExcel = () => {
   // 导出逻辑
 };
