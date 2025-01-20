@@ -330,14 +330,6 @@ const userInfoRules = {
   ],
 };
 
-const validateNewPassword = (rule, value, callback) => {
-  if (value !== userPassEditForm.value.new_password) {
-    callback(new Error("两次密码不一致"));
-  } else {
-    callback();
-  }
-};
-
 const userPassRules = {
   password: [{ required: true, message: "请输入旧密码", trigger: "blur" }],
   new_password: [
@@ -351,24 +343,28 @@ const userPassRules = {
   confirm_password: [
     { required: true, message: "请输入确认密码", trigger: "blur" },
     {
-      pattern: /^(?=.*[a-zA-Z])(?=.*\d)[^\s^\u4e00-\u9fff]{6,16}$/,
-      message: "请输入6-16位字母数字特殊字符混合密码",
-      trigger: "blur",
+      validator: (rule, value, callback) => {
+        if (value === "") {
+          callback(new Error("请再次输入密码"));
+        } else if (value !== userPassEditForm.value.new_password) {
+          callback(new Error("两次输入密码不一致!"));
+        } else {
+          callback();
+        }
+      },
+      trigger: ["blur", "change"],
     },
-    { validator: validateNewPassword, trigger: "blur" },
   ],
 };
 
 const cancel = () => {
   editUserInfoDialog.value = false;
   editUserPassDialog.value = false;
+  resetForm();
+
   if (userInfoEditRef.value) {
     userInfoEditRef.value.clearValidate();
   }
-  if (userPassEditRef.value) {
-    userPassEditRef.value.clearValidate();
-  }
-  resetForm();
 };
 
 const resetForm = () => {
@@ -376,9 +372,19 @@ const resetForm = () => {
   userInfoEditForm.value.name = userInfo.name;
   userInfoEditForm.value.phone = userInfo.phone;
   email.value = userInfo.email;
-  userPassEditForm.value.password = "";
-  userPassEditForm.value.new_password = "";
-  userPassEditForm.value.confirm_password = "";
+
+  // 清空密码表单
+  userPassEditForm.value = {
+    password: "",
+    new_password: "",
+    confirm_password: "",
+    id: JSON.parse(localStorage.getItem("userInfo")).id,
+  };
+
+  // 清除验证结果
+  if (userPassEditRef.value) {
+    userPassEditRef.value.clearValidate();
+  }
 };
 
 const submitUserInfoForm = async () => {
@@ -403,39 +409,44 @@ const submitUserInfoForm = async () => {
 };
 
 const submitUserPassForm = async () => {
-  userPassEditRef.value.validate(async (valid) => {
-    if (valid) {
-      if (
-        userPassEditForm.value.password === userPassEditForm.value.new_password
-      ) {
-        ElMessage.error("新密码和原密码一致");
-        return null;
-      }
-      try {
-        const response = await passUser(userPassEditForm.value);
-        if (response.code === 200) {
-          editUserPassDialog.value = false;
-          userInfo.password = null;
-          localStorage.setItem("TOKEN", "");
-          localStorage.setItem("userInfo", JSON.stringify(userInfo));
-          updateDialogVisible.value = true;
-          ElMessageBox.alert("密码已修改成功，请重新登录", "提示", {
-            confirmButtonText: "确定",
-            showClose: false,
-            closeOnClickModal: false,
-            closeOnPressEscape: false,
-            callback: () => {
-              router.push("/login");
-            },
-          });
-        }
-      } catch (error) {
-        console.error("修改密码失败:", error);
-      }
-    }
-  });
-};
+  try {
+    // 先进行表单验证
+    await userPassEditRef.value.validate();
 
+    // 验证新密码是否与旧密码相同
+    if (
+      userPassEditForm.value.password === userPassEditForm.value.new_password
+    ) {
+      ElMessage.error("新密码不能与原密码相同");
+      return;
+    }
+
+    // 提交修改密码请求
+    const response = await passUser(userPassEditForm.value);
+    if (response.code === 200) {
+      editUserPassDialog.value = false;
+      userInfo.password = null;
+      localStorage.setItem("TOKEN", "");
+      localStorage.setItem("userInfo", JSON.stringify(userInfo));
+
+      ElMessageBox.alert("密码已修改成功，请重新登录", "提示", {
+        confirmButtonText: "确定",
+        showClose: false,
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        callback: () => {
+          router.push("/login");
+        },
+      });
+    }
+  } catch (error) {
+    if (error.errors) {
+      console.error("表单验证失败:", error);
+    } else {
+      console.error("修改密码失败:", error);
+    }
+  }
+};
 const getUserInfo = async () => {
   const savedUserInfo = localStorage.getItem("userInfo");
   try {
@@ -514,11 +525,6 @@ const handleOverlayClick = () => {
 onMounted(() => {
   getUserInfo();
 });
-
-const commitDelete = async () => {
-  updateDialogVisible.value = false;
-  router.push("/login");
-};
 </script>
 
 <style lang="less" scoped>
@@ -790,20 +796,30 @@ const commitDelete = async () => {
 .ios-form-group {
   background: #fff;
   border-radius: 10px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   //添加元素间的距离
   padding: 0 16px;
 
   .el-form-item {
     margin: 0;
+    position: relative;
 
     &:not(:last-child) {
       border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
     }
+    &:last-child {
+      margin-bottom: 20px; // 添加底部间距
+    }
   }
 }
-
+:deep(.el-form-item__error) {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  padding-top: 4px;
+  z-index: 1;
+}
 .ios-input {
   :deep(.el-input__wrapper) {
     background: transparent;

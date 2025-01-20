@@ -149,6 +149,13 @@
                 {{ getExamStatusName(row.status) }}
               </template>
             </el-table-column>
+            <el-table-column
+              prop="paper_name"
+              label="试卷名称"
+              width="160"
+              sortable
+              show-overflow-tooltip
+            />
             <el-table-column prop="departments" label="参考部门" width="250">
               <template #default="{ row }">
                 <el-tag
@@ -890,6 +897,16 @@ const handleDelete = async (row) => {
       const response = await delExam({ ids: [row.id] });
       if (response.code === 200) {
         ElMessage.success("删除成功!");
+
+        // 计算删除后的总数据量
+        const newTotal = total.value - 1;
+        // 计算删除后的最大页码
+        const maxPage = Math.ceil(newTotal / searchForm.value.pageSize);
+
+        // 如果当前页码大于最大页码,则将页码设置为最大页码
+        if (searchForm.value.pageNo > maxPage) {
+          searchForm.value.pageNo = Math.max(1, maxPage);
+        }
         await fetchExams();
       }
     } catch (error) {
@@ -914,6 +931,16 @@ const handleBatchDelete = async () => {
       const response = await delExam({ ids: ids });
       if (response.code === 200) {
         ElMessage.success("删除成功!");
+
+        // 计算删除后的总数据量
+        const newTotal = total.value - ids.length;
+        // 计算删除后的最大页码
+        const maxPage = Math.ceil(newTotal / searchForm.value.pageSize);
+
+        // 如果当前页码大于最大页码,则将页码设置为最大页码
+        if (searchForm.value.pageNo > maxPage) {
+          searchForm.value.pageNo = Math.max(1, maxPage);
+        }
         await fetchExams();
       }
     } catch (error) {

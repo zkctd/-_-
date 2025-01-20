@@ -601,6 +601,16 @@ const handleBatchDelete = async () => {
       const response = await delPapers({ ids: ids });
       if (response.code === 200) {
         ElMessage.success("删除成功!");
+
+        // 计算删除后的总数据量
+        const newTotal = total.value - ids.length;
+        // 计算删除后的最大页码
+        const maxPage = Math.ceil(newTotal / searchForm.value.pageSize);
+
+        // 如果当前页码大于最大页码,则将页码设置为最大页码
+        if (searchForm.value.pageNo > maxPage) {
+          searchForm.value.pageNo = Math.max(1, maxPage);
+        }
         await fetchExams();
       }
     } catch (error) {
@@ -657,6 +667,16 @@ const handleDelete = async (row) => {
       const response = await delPapers({ ids: [row.id] });
       if (response.code === 200) {
         ElMessage.success("删除成功!");
+
+        // 计算删除后的总数据量
+        const newTotal = total.value - 1;
+        // 计算删除后的最大页码
+        const maxPage = Math.ceil(newTotal / searchForm.value.pageSize);
+
+        // 如果当前页码大于最大页码,则将页码设置为最大页码
+        if (searchForm.value.pageNo > maxPage) {
+          searchForm.value.pageNo = Math.max(1, maxPage);
+        }
         await fetchExams();
       }
     } catch (error) {

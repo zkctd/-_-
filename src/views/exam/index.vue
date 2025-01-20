@@ -31,7 +31,7 @@
             class="question-type-section"
           >
             <div class="type-header">
-              <h3>一、单选题</h3>
+              <h3>{{ getQuestionTypeTitle("single") }}</h3>
             </div>
             <div
               v-for="(question, index) in singleChoiceQuestions"
@@ -66,7 +66,7 @@
             class="question-type-section"
           >
             <div class="type-header">
-              <h3>二、多选题</h3>
+              <h3>{{ getQuestionTypeTitle("multiple") }}</h3>
             </div>
             <div
               v-for="(question, index) in multipleChoiceQuestions"
@@ -98,7 +98,7 @@
           <!-- 判断题部分 -->
           <div v-if="judgmentQuestions.length" class="question-type-section">
             <div class="type-header">
-              <h3>三、判断题</h3>
+              <h3>{{ getQuestionTypeTitle("judge") }}</h3>
             </div>
             <div
               v-for="(question, index) in judgmentQuestions"
@@ -124,7 +124,7 @@
           <!-- 简答题部分 -->
           <div v-if="shortAnswerQuestions.length" class="question-type-section">
             <div class="type-header">
-              <h3>四、简答题</h3>
+              <h3>{{ getQuestionTypeTitle("short") }}</h3>
             </div>
             <div
               v-for="(question, index) in shortAnswerQuestions"
@@ -477,6 +477,35 @@ const restoreAnswers = () => {
 const clearAnswers = () => {
   if (!submit_examaId.value) return;
   localStorage.removeItem(getAnswerStorageKey(submit_examaId.value));
+};
+
+const getQuestionTypeTitle = (type) => {
+  const chineseNumbers = ["一", "二", "三", "四", "五"];
+
+  // 获取所有存在题目的题型按顺序排列
+  const existingTypes = [];
+  if (singleChoiceQuestions.value.length) existingTypes.push("single");
+  if (multipleChoiceQuestions.value.length) existingTypes.push("multiple");
+  if (judgmentQuestions.value.length) existingTypes.push("judge");
+  if (shortAnswerQuestions.value.length) existingTypes.push("short");
+
+  // 获取当前题型在序列中的索引
+  const typeIndex = existingTypes.indexOf(type);
+
+  // 获取题型显示名称
+  const typeNames = {
+    single: "单选题",
+    multiple: "多选题",
+    judge: "判断题",
+    short: "简答题",
+  };
+
+  // 如果题型存在，返回带序号的标题
+  if (typeIndex !== -1) {
+    return `${chineseNumbers[typeIndex]}、${typeNames[type]}`;
+  }
+
+  return "";
 };
 
 const processQuestions = (questions, isRandom) => {

@@ -615,6 +615,7 @@ const fetchQuestions = async () => {
       total.value = response.data.total;
     }
   } catch (error) {
+    tableData.value = [];
     console.error("获取试题列表失败:", error);
   }
 };
@@ -773,6 +774,15 @@ const handleBatchDelete = async () => {
       const response = await delQuestion({ ids: ids });
       if (response.code === 200) {
         ElMessage.success("删除成功!");
+        // 计算删除后的总数据量
+        const newTotal = total.value - ids.length;
+        // 计算删除后的最大页码
+        const maxPage = Math.ceil(newTotal / searchForm.value.pageSize);
+
+        // 如果当前页码大于最大页码,则将页码设置为最大页码
+        if (searchForm.value.pageNo > maxPage) {
+          searchForm.value.pageNo = Math.max(1, maxPage);
+        }
         await fetchQuestions();
       }
     } catch (error) {
@@ -849,6 +859,15 @@ const handleDelete = async (row) => {
       const response = await delQuestion({ ids: [row.id] });
       if (response.code === 200) {
         ElMessage.success("删除成功!");
+        // 计算删除后的总数据量
+        const newTotal = total.value - 1;
+        // 计算删除后的最大页码
+        const maxPage = Math.ceil(newTotal / searchForm.value.pageSize);
+
+        // 如果当前页码大于最大页码,则将页码设置为最大页码
+        if (searchForm.value.pageNo > maxPage) {
+          searchForm.value.pageNo = Math.max(1, maxPage);
+        }
         await fetchQuestions();
       }
     } catch (error) {

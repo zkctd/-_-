@@ -33,7 +33,7 @@
             class="question-type-section"
           >
             <div class="type-header">
-              <h3>一、单选题</h3>
+              <h3>{{ getQuestionTypeTitle("single") }}</h3>
             </div>
             <div
               v-for="question in singleChoiceQuestions"
@@ -84,7 +84,7 @@
             class="question-type-section"
           >
             <div class="type-header">
-              <h3>二、多选题</h3>
+              <h3>{{ getQuestionTypeTitle("multiple") }}</h3>
             </div>
             <div
               v-for="question in multipleChoiceQuestions"
@@ -144,7 +144,7 @@
           <!-- 判断题部分 -->
           <div v-if="judgmentQuestions.length" class="question-type-section">
             <div class="type-header">
-              <h3>三、判断题</h3>
+              <h3>{{ getQuestionTypeTitle("judge") }}</h3>
             </div>
             <div
               v-for="question in judgmentQuestions"
@@ -206,7 +206,7 @@
           <!-- 简答题部分 -->
           <div v-if="shortAnswerQuestions.length" class="question-type-section">
             <div class="type-header">
-              <h3>四、简答题</h3>
+              <h3>{{ getQuestionTypeTitle("short") }}</h3>
             </div>
             <div
               v-for="question in shortAnswerQuestions"
@@ -343,6 +343,44 @@ const judgmentQuestions = computed(() =>
 const shortAnswerQuestions = computed(() =>
   questions.value.filter((q) => q.type === "short")
 );
+
+const questionTypes = computed(() => {
+  const types = [];
+  if (singleChoiceQuestions.value.length) types.push("single");
+  if (multipleChoiceQuestions.value.length) types.push("multiple");
+  if (judgmentQuestions.value.length) types.push("judge");
+  if (shortAnswerQuestions.value.length) types.push("short");
+  return types;
+});
+
+// 数字转中文序号
+const getChineseNumber = (index) => {
+  const chineseNumbers = [
+    "一",
+    "二",
+    "三",
+    "四",
+    "五",
+    "六",
+    "七",
+    "八",
+    "九",
+    "十",
+  ];
+  return chineseNumbers[index];
+};
+
+// 获取题型标题
+const getQuestionTypeTitle = (type) => {
+  const typeIndex = questionTypes.value.indexOf(type);
+  const typeNames = {
+    single: "单选题",
+    multiple: "多选题",
+    judge: "判断题",
+    short: "简答题",
+  };
+  return `${getChineseNumber(typeIndex)}、${typeNames[type]}`;
+};
 // 判断答案是否正确
 const isCorrect = (question) => {
   if (question.type === "short") {

@@ -166,6 +166,19 @@
               width="150px"
               show-overflow-tooltip
             ></el-table-column>
+            <el-table-column prop="status" label="用户状态" width="90px">
+              <template #default="{ row }">
+                <img
+                  :src="
+                    row.status === true
+                      ? '/images/common/normal.png'
+                      : '/images/common/disable.png'
+                  "
+                  alt=""
+                />
+                {{ row.status === true ? "正常" : "禁用" }}
+              </template>
+            </el-table-column>
             <el-table-column
               prop="phone"
               label="手机号"
@@ -206,19 +219,6 @@
               width="200"
               show-overflow-tooltip
             ></el-table-column>
-            <el-table-column prop="status" label="用户状态" width="90px">
-              <template #default="{ row }">
-                <img
-                  :src="
-                    row.status === true
-                      ? '/images/common/normal.png'
-                      : '/images/common/disable.png'
-                  "
-                  alt=""
-                />
-                {{ row.status === true ? "正常" : "禁用" }}
-              </template>
-            </el-table-column>
             <el-table-column label="操作" min-width="320px" fixed="right">
               <template #default="{ row }">
                 <el-button type="primary" @click="handleEdit(row)" link
@@ -712,6 +712,16 @@ const handleBatchDelete = async () => {
       const response = await deluser({ ids: ids });
       if (response.code === 200) {
         ElMessage.success("删除成功!");
+
+        // 计算删除后的总数据量
+        const newTotal = total.value - ids.length;
+        // 计算删除后的最大页码
+        const maxPage = Math.ceil(newTotal / searchForm.value.pageSize);
+
+        // 如果当前页码大于最大页码,则将页码设置为最大页码
+        if (searchForm.value.pageNo > maxPage) {
+          searchForm.value.pageNo = Math.max(1, maxPage);
+        }
         await fetchUsers();
       }
     } catch (error) {
@@ -731,9 +741,13 @@ const handleEdit = async (row) => {
   try {
     const response = await userInfos(row.id);
     if (response.code === 200 && response.data) {
+      const departOption = dpartOptions.value.find(
+        (opt) => opt.label === response.data.depart
+      );
       userInfoForm.value = {
         ...response.data,
         status: response.data.status ? 0 : 1,
+        depart: departOption ? departOption.value : "",
       };
       editUserDialogVisible.value = true;
     } else {
@@ -831,6 +845,16 @@ const handleDelete = async (row) => {
       const response = await deluser({ ids: [row.id] });
       if (response.code === 200) {
         ElMessage.success("删除成功!");
+
+        // 计算删除后的总数据量
+        const newTotal = total.value - 1;
+        // 计算删除后的最大页码
+        const maxPage = Math.ceil(newTotal / searchForm.value.pageSize);
+
+        // 如果当前页码大于最大页码,则将页码设置为最大页码
+        if (searchForm.value.pageNo > maxPage) {
+          searchForm.value.pageNo = Math.max(1, maxPage);
+        }
         await fetchUsers();
       }
     } catch (error) {
