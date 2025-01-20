@@ -290,8 +290,21 @@
             </div>
           </div>
 
-          <el-button @click="handleReturn" class="return-btn" size="large">
+          <el-button
+            v-if="usertype === 0"
+            @click="handleReturn"
+            class="return-btn"
+            size="large"
+          >
             返回考试列表
+          </el-button>
+          <el-button
+            v-else
+            @click="router.back()"
+            class="return-btn"
+            size="large"
+          >
+            返回
           </el-button>
         </div>
       </el-col>
@@ -305,7 +318,7 @@ import { examResult } from "@/api/index";
 
 const route = useRoute();
 const router = useRouter();
-
+const usertype = Number(localStorage.getItem("usertype"));
 const examInfo = ref({
   title: "",
   userName: "",
@@ -578,10 +591,16 @@ const processExamData = (data) => {
 
 // 获取考试结果数据
 onMounted(async () => {
+  let userId = "";
+  if (usertype === 1) {
+    userId = route.query.user_id;
+  } else {
+    userId = JSON.parse(localStorage.getItem("userInfo")).id;
+  }
   try {
     const response = await examResult({
       exam_id: route.query.examId,
-      user_id: JSON.parse(localStorage.getItem("userInfo")).id,
+      user_id: userId,
     });
 
     if (response.code === 200) {

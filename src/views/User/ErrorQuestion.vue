@@ -9,7 +9,7 @@
     </el-row>
     <div class="wrong-questions">
       <!-- 顶部统计概览 -->
-      <el-row class="stats-overview" :gutter="24">
+      <!-- <el-row class="stats-overview" :gutter="24">
         <el-col
           :xs="24"
           :sm="8"
@@ -23,16 +23,16 @@
             <div class="stat-title">{{ stat.title }}</div>
           </div>
         </el-col>
-      </el-row>
+      </el-row> -->
 
       <!-- 筛选区 -->
-      <div class="filter-section">
+      <!-- <div class="filter-section">
         <el-radio-group v-model="masteryLevel" class="filter-item">
-          <el-radio-button label="all">全部</el-radio-button>
-          <el-radio-button label="mastered">已掌握</el-radio-button>
-          <el-radio-button label="learning">待复习</el-radio-button>
+          <el-radio-button value="all">全部</el-radio-button>
+          <el-radio-button value="mastered">已掌握</el-radio-button>
+          <el-radio-button value="learning">待复习</el-radio-button>
         </el-radio-group>
-      </div>
+      </div> -->
 
       <!-- 错题卡片列表 -->
       <div class="question-list">
@@ -76,8 +76,9 @@
       <!-- 空状态 -->
       <div v-if="filteredQuestions.length === 0" class="empty-state">
         <el-icon class="empty-icon"><DocumentDelete /></el-icon>
-        <h3 class="empty-title">暂无错题记录</h3>
-        <p class="empty-description">继续努力学习吧!</p>
+        <h3 class="empty-title">开发中</h3>
+        <!-- <h3 class="empty-title">暂无错题记录</h3>
+        <p class="empty-description">继续努力学习吧!</p> -->
       </div>
     </div>
   </div>
@@ -88,33 +89,33 @@ import { ref, computed } from "vue";
 import { Warning, DocumentDelete } from "@element-plus/icons-vue";
 import dayjs from "dayjs";
 const filteredQuestions = ref([
-  {
-    id: 1,
-    title: "如何使用 Vue 3 的 Composition API?",
-    subject: "Vue.js",
-    difficulty: "easy",
-    wrongCount: 3,
-    mastery: 60,
-    lastWrongTime: "2021-09-01",
-  },
-  {
-    id: 2,
-    title: "Vue 3 的响应式原理是什么?",
-    subject: "Vue.js",
-    difficulty: "medium",
-    wrongCount: 2,
-    mastery: 80,
-    lastWrongTime: "2021-08-28",
-  },
-  {
-    id: 3,
-    title: "Vue 3 的新特性有哪些?",
-    subject: "Vue.js",
-    difficulty: "hard",
-    wrongCount: 5,
-    mastery: 40,
-    lastWrongTime: "2021-08-25",
-  },
+  // {
+  //   id: 1,
+  //   title: "如何使用 Vue 3 的 Composition API?",
+  //   subject: "Vue.js",
+  //   difficulty: "easy",
+  //   wrongCount: 3,
+  //   mastery: 60,
+  //   lastWrongTime: "2021-09-01",
+  // },
+  // {
+  //   id: 2,
+  //   title: "Vue 3 的响应式原理是什么?",
+  //   subject: "Vue.js",
+  //   difficulty: "medium",
+  //   wrongCount: 2,
+  //   mastery: 80,
+  //   lastWrongTime: "2021-08-28",
+  // },
+  // {
+  //   id: 3,
+  //   title: "Vue 3 的新特性有哪些?",
+  //   subject: "Vue.js",
+  //   difficulty: "hard",
+  //   wrongCount: 5,
+  //   mastery: 40,
+  //   lastWrongTime: "2021-08-25",
+  // },
 ]);
 
 const getDifficultyClass = (difficulty) => {
@@ -198,7 +199,7 @@ const masteryLevel = ref("all");
 .wrong-questions {
   background-color: #fff;
   padding: 30px 40px;
-  min-height: calc(100vh - 140px);
+  min-height: calc(100vh - 200px);
 
   .stats-overview {
     margin-bottom: 20px;

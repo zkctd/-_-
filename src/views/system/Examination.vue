@@ -583,7 +583,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch, computed } from "vue";
+import { onMounted, ref, watch, computed, onBeforeUnmount } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   examList,
@@ -594,7 +594,6 @@ import {
   examDetail,
   resetExam,
   dpartList,
-  userList,
   allUserList,
 } from "@/api/index";
 import dayjs from "dayjs";
@@ -1129,8 +1128,58 @@ const rules = {
   end_time: [{ required: true, trigger: "change", message: "请选择结束时间" }],
 };
 
+// 定时器
+let refreshTimer = null;
+const REFRESH_INTERVAL = 30000; // 30秒刷新一次
+
+// 自动刷新函数
+const startAutoRefresh = () => {
+  // 清除存在的旧定时器
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+  }
+
+  // 设置新的定时器
+  refreshTimer = setInterval(() => {
+    fetchExams();
+  }, REFRESH_INTERVAL);
+};
+
+// 组件销毁，清理
+onBeforeUnmount(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+});
+
+const handleVisibilityChange = () => {
+  if (document.hidden) {
+    // 页面隐藏时清除定时器
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+  } else {
+    // 页面显示时重新获取数据并启动定时器
+    fetchExams();
+    startAutoRefresh();
+  }
+};
+
 onMounted(() => {
   fetchExams();
+  startAutoRefresh();
+  // 添加页面可见性变化监听
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+});
+
+onBeforeUnmount(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+  }
+  // 移除页面可见性变化监听
+  document.removeEventListener("visibilitychange", handleVisibilityChange);
 });
 </script>
 

@@ -254,8 +254,7 @@ import { ref, onMounted, onUnmounted, computed } from "vue";
 import { Timer } from "@element-plus/icons-vue";
 import { papersDetail, resultCreat } from "@/api/index";
 import { useRoute, useRouter } from "vue-router";
-import { useStore } from "vuex";
-import { ElMessageBox } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 const router = useRouter();
 const usertype = Number(localStorage.getItem("usertype"));
 const route = useRoute();
@@ -311,7 +310,14 @@ const scrollToQuestion = (index) => {
   }
 };
 
-const handleSubmit = () => {
+const handleSubmit = (isAutoSubmit = false) => {
+  // 如果是自动提交，直接提交答案
+  if (isAutoSubmit) {
+    submitAnswers();
+    return;
+  }
+
+  // 手动提交时的检查逻辑
   const unfinishedQuestions = questions.value.filter((question) => {
     const answer = answers.value[question.index];
     switch (question.type) {
@@ -324,89 +330,89 @@ const handleSubmit = () => {
         return !answer || answer.trim() === "";
     }
   });
-  let warningMessage = "确认提交试卷？提交后将无法修改。";
 
+  let warningMessage = "确认提交试卷？提交后将无法修改。";
   if (unfinishedQuestions.length > 0) {
     const unfinishedIndexes = unfinishedQuestions
       .map((q) => q.index)
       .join(", ");
     warningMessage = `还有第 ${unfinishedIndexes} 题未完成，确定要提交吗？提交后将无法修改。`;
   }
+
   ElMessageBox.confirm(warningMessage, "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning",
   })
     .then(() => {
-      // 格式化答案
-      const answersList = Object.keys(answers.value).map((index) => {
-        const question = questions.value[index - 1];
-        let formattedAnswer = "";
-
-        // 根据题型格式化答案
-        switch (question.type) {
-          case "single":
-            // 单选题答案转为字符串
-            formattedAnswer = answers.value[index]?.toString() || "";
-            break;
-          case "multiple":
-            // 多选题答案用分号连接
-            formattedAnswer = Array.isArray(answers.value[index])
-              ? answers.value[index].sort().join(";")
-              : "";
-            break;
-          case "judge":
-            // 判断题转为 "1"/"0"
-            formattedAnswer =
-              answers.value[index] === true
-                ? "1"
-                : answers.value[index] === false
-                ? "0"
-                : "";
-            break;
-          case "short":
-            // 简答题直接转字符串
-            formattedAnswer = answers.value[index]?.toString() || "";
-            break;
-        }
-
-        return {
-          question: question.id,
-          solution: formattedAnswer,
-        };
-      });
-
-      // 提交答案
-      resultCreat({
-        exam_id: submit_examaId.value,
-        user_id: JSON.parse(localStorage.getItem("userInfo")).id,
-        questions_solutions: answersList,
-      })
-        .then((response) => {
-          if (response.code === 200) {
-            clearAnswers();
-            if (IsshowAnswer.value === 1) {
-              router.push({
-                name: "examResult",
-                query: {
-                  examId: route.query.id,
-                },
-              });
-            } else {
-              router.push("/MyExmam");
-            }
-          }
-        })
-        .catch((error) => {
-          console.error("提交试卷失败:", error);
-        });
+      submitAnswers();
     })
     .catch(() => {
       // 取消提交
     });
 };
 
-// 修改 handleReturn 方法
+const submitAnswers = () => {
+  // 格式化答案
+  const answersList = Object.keys(answers.value).map((index) => {
+    const question = questions.value[index - 1];
+    let formattedAnswer = "";
+
+    // 根据题型格式化答案
+    switch (question.type) {
+      case "single":
+        formattedAnswer = answers.value[index]?.toString() || "";
+        break;
+      case "multiple":
+        formattedAnswer = Array.isArray(answers.value[index])
+          ? answers.value[index].sort().join(";")
+          : "";
+        break;
+      case "judge":
+        formattedAnswer =
+          answers.value[index] === true
+            ? "1"
+            : answers.value[index] === false
+            ? "0"
+            : "";
+        break;
+      case "short":
+        formattedAnswer = answers.value[index]?.toString() || "";
+        break;
+    }
+
+    return {
+      question: question.id,
+      solution: formattedAnswer,
+    };
+  });
+
+  // 提交答案
+  resultCreat({
+    exam_id: submit_examaId.value,
+    user_id: JSON.parse(localStorage.getItem("userInfo")).id,
+    questions_solutions: answersList,
+  })
+    .then((response) => {
+      if (response.code === 200) {
+        clearAnswers();
+        if (IsshowAnswer.value === 1) {
+          router.push({
+            name: "examResult",
+            query: {
+              examId: route.query.id,
+            },
+          });
+        } else {
+          router.push("/MyExmam");
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("提交试卷失败:", error);
+    });
+};
+
 const handleReturn = () => {
   if (usertype === 1) {
     router.back();
@@ -500,7 +506,7 @@ const processQuestions = (questions, isRandom) => {
 
   return processedQuestions;
 };
-// 随机打乱数组的辅助函数
+// 随机辅助函数
 const shuffleArray = (array) => {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -583,13 +589,31 @@ onMounted(async () => {
   timer = setInterval(() => {
     if (remainingTime.value > 0) {
       remainingTime.value--;
+      // 在最后2分钟给出提醒
+      if (remainingTime.value === 120) {
+        ElMessage({
+          type: "warning",
+          message: "距离考试结束还有2分钟!",
+          duration: 3000,
+        });
+      }
     } else {
       clearInterval(timer);
-      // 处理考试结束逻辑
+      // 考试时间到,自动提交
+      if (usertype === 0) {
+        ElMessage({
+          type: "warning",
+          message: "考试时间已到,系统将自动提交试卷!",
+          duration: 3000,
+        });
+        setTimeout(() => {
+          handleSubmit(true);
+        }, 2000);
+      }
     }
   }, 1000);
 });
-// 确保在组件卸载时清除计时器
+// 组件卸载时清除计时器
 onUnmounted(() => {
   if (timer) {
     clearInterval(timer);

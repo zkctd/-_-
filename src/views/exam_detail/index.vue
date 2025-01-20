@@ -22,34 +22,42 @@
 
     <!-- 总体统计卡片 -->
     <div class="stats-cards">
-      <div
+      <el-tooltip
         v-for="(exam, index) in examList"
         :key="index"
-        class="exam-group"
-        @click="
-          router.push({ name: 'UserPaperDetail', query: { examId: exam.id } })
-        "
+        content="点击查看用户成绩详情和答题情况"
+        placement="bottom-start"
+        effect="light"
+        :enterable="false"
+        offset="0"
       >
-        <div class="exam-title">{{ getExamTitle(exam) }}</div>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value">{{ exam.average_score }}</div>
-            <div class="stat-label">平均分</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ exam.pass_rate }}%</div>
-            <div class="stat-label">通过率</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ exam.should_num }}</div>
-            <div class="stat-label">应参考人数</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ exam.actual_num }}</div>
-            <div class="stat-label">实际参考人数</div>
+        <div
+          class="exam-group"
+          @click="
+            router.push({ name: 'UserPaperDetail', query: { examId: exam.id } })
+          "
+        >
+          <div class="exam-title">{{ getExamTitle(exam) }}</div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">{{ exam.average_score }}</div>
+              <div class="stat-label">平均分</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ exam.pass_rate }}%</div>
+              <div class="stat-label">通过率</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ exam.should_num }}</div>
+              <div class="stat-label">应参考人数</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ exam.actual_num }}</div>
+              <div class="stat-label">实际参考人数</div>
+            </div>
           </div>
         </div>
-      </div>
+      </el-tooltip>
     </div>
 
     <!-- 图表区域 -->

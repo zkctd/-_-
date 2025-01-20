@@ -28,7 +28,7 @@
             <el-form-item prop="keywords">
               <el-input
                 class="search"
-                v-model="searchForm.keywords"
+                v-model="searchForm.username"
                 placeholder="请输入姓名搜索"
               >
                 <template #suffix>
@@ -63,7 +63,7 @@
           <el-table
             :data="tableData"
             border
-            :default-sort="{ prop: 'score', order: 'descending' }"
+            :default-sort="{ prop: 'total_score', order: 'descending' }"
             size="large"
           >
             <el-table-column
@@ -73,7 +73,13 @@
               show-overflow-tooltip
             />
             <el-table-column
-              prop="score"
+              prop="depart"
+              label="部门"
+              width="120"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              prop="total_score"
               label="成绩"
               width="100"
               sortable
@@ -81,16 +87,16 @@
             >
               <template #default="{ row }">
                 <el-tag
-                  :type="getScoreTagType(row.score)"
+                  :type="getScoreTagType(row.total_score)"
                   effect="plain"
                   size="small"
                 >
-                  {{ row.score }}分
+                  {{ row.total_score }}分
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column
-              prop="error_rate"
+              prop="correct_rate"
               label="错误率"
               width="100"
               sortable
@@ -98,21 +104,21 @@
             >
               <template #default="{ row }">
                 <el-tag type="danger" effect="plain" size="small">
-                  {{ row.error_rate }}%
+                  {{ row.correct_rate }}%
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column
-              prop="submit_time"
+              prop="created_at"
               label="提交时间"
               width="180"
               show-overflow-tooltip
               sortable
             />
             <el-table-column
-              prop="duration"
+              prop="exam_duration"
               label="答题用时"
-              width="120"
+              width="180"
               show-overflow-tooltip
               sortable
             />
@@ -149,9 +155,9 @@ const router = useRouter();
 const searchRef = ref();
 const tableData = ref([]);
 const total = ref(0);
-
 const searchForm = ref({
-  exam_id: useRoute().query.id,
+  grade_id: useRoute().query.examId,
+  username: "",
   pageNo: 1,
   pageSize: 10,
 });
@@ -166,8 +172,8 @@ const getScoreTagType = (score) => {
 // 模拟获取成绩数据
 const fetchScores = async () => {
   try {
-    const { data } = await gradesDetail(searchForm.value);
-    tableData.value = data.list;
+    const res = await gradesDetail(searchForm.value);
+    tableData.value = res.data.data;
     total.value = data.total;
   } catch (error) {
     console.error("获取成绩数据失败");
@@ -177,8 +183,13 @@ const fetchScores = async () => {
 
 // 查看试卷详情
 const viewDetail = (row) => {
-  // 实现查看详情逻辑
-  ElMessage.info(`查看${row.name}的试卷详情`);
+  router.push({
+    name: "examResult",
+    query: {
+      examId: row.exam_id,
+      user_id: row.user_id,
+    },
+  });
 };
 
 const searchEvtHandler = () => {

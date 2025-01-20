@@ -40,6 +40,12 @@ http.interceptors.response.use(
     if (data.code === 401) {
       localStorage.removeItem("TOKEN");
       ElMessage.error("您的会话已过期，请重新登录");
+      localStorage.removeItem("TOKEN");
+      localStorage.removeItem("menuList");
+      localStorage.removeItem("activeKey");
+      localStorage.removeItem("userInfo");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("loginTime");
       router.push("/login");
     } else if (data.code !== 200) {
       ElMessage.error(response.data.msg ? response.data.msg : "请求失败！");

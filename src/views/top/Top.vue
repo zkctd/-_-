@@ -153,7 +153,7 @@ const getUserResourceInfo = async () => {
   }
 };
 const pendingTasks = ref(0);
-const totalExams = ref(0);
+const totalExams = JSON.parse(localStorage.getItem("userInfo")).exams_number;
 const features = computed(() => {
   return usertype === 1
     ? [
@@ -202,18 +202,18 @@ const features = computed(() => {
         {
           id: 1,
           title: "我的考试",
-          description: "查看和参加考试",
+          description: "参加考试和查看考试记录",
           icon: "Document",
-          color: "blue",
+          color: "green",
           route: "/MyExmam",
         },
         {
           id: 2,
-          title: "成绩查询",
-          description: "查看考试成绩和分析",
-          icon: "TrendCharts",
-          color: "green",
-          route: "/MyExmam",
+          title: "错题集",
+          description: "查看和练习错题",
+          icon: "DocumentCopy",
+          color: "red",
+          route: "/ErrorQuestion",
         },
         {
           id: 3,

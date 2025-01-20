@@ -9,7 +9,13 @@
           <common-aside :menuList="menuList" />
         </el-aside>
         <el-main width="calc(100vw - 240px)">
-          <router-view></router-view>
+          <router-view v-slot="{ Component }">
+            <transition name="page" mode="out-in" appear>
+              <div :key="$route.path">
+                <component :is="Component" />
+              </div>
+            </transition>
+          </router-view>
         </el-main>
       </el-container>
     </el-container>
@@ -25,7 +31,7 @@ const menuList = ref([]);
 
 onMounted(() => {
   menuList.value = JSON.parse(localStorage.getItem("menuList"));
-})
+});
 </script>
 
 <style scoped>
@@ -52,5 +58,43 @@ onMounted(() => {
 .el-main {
   padding: 0;
   min-height: calc(100vh - 72px);
+}
+
+/* 页面切换动画 */
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.3s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* 优化动画性能 */
+.page-enter-active,
+.page-leave-active {
+  will-change: transform, opacity;
+  /* perspective: 1000px; */
+  backface-visibility: hidden;
+}
+
+/* 可选：添加模糊效果增强过渡感 */
+.page-enter-from,
+.page-leave-to {
+  filter: blur(2px);
+}
+
+.page-enter-active {
+  transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.page-leave-active {
+  transition-timing-function: cubic-bezier(0.32, 0, 0.67, 0);
 }
 </style>

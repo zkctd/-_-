@@ -1,12 +1,19 @@
 // 添加动态路由
 import router from "./index";
-import Layout from "../views/MainPage.vue";
-
 import { modules } from "./modules";
-
+import NProgress from "nprogress";
+import "nprogress/nprogress.css";
 const whiteList = ["/login", "/updatePassword", "/Register", "/ForgetPassword"];
-
+NProgress.configure({
+  easing: "ease", // 动画方式
+  speed: 500, // 递增进度条的速度
+  showSpinner: false, // 是否显示加载ico
+  trickleSpeed: 200, // 自动递增间隔
+  minimum: 0.3, // 初始化时的最小百分比
+});
 router.beforeEach((to, from, next) => {
+  // 开启进度条
+  NProgress.start();
   const token = localStorage.getItem("TOKEN");
   if (token) {
     if (to.matched.length === 0) {
@@ -24,11 +31,21 @@ router.beforeEach((to, from, next) => {
       next();
     } else {
       // 未登录，跳转到登录页面
+      localStorage.removeItem("TOKEN");
+      localStorage.removeItem("menuList");
+      localStorage.removeItem("activeKey");
+      localStorage.removeItem("userInfo");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("loginTime");
       next("/login");
     }
   }
 });
-
+// 路由跳转完成
+router.afterEach(() => {
+  // 关闭进度条
+  NProgress.done();
+});
 export const addDynamicRoutes = (menus) => {
   const routes = menusToRoutes(menus);
   console.log("roters", router.getRoutes());

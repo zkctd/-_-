@@ -86,33 +86,13 @@
             </template>
           </el-input>
         </el-form-item>
-        <!-- <el-form-item v-if="captchaEnabled" prop="code">
-          <el-input
-            v-model="loginForm.code"
-            placeholder="图形验证"
-            id="captcha"
-            type="text"
-            autocomplete="off"
-            class="login-input"
-            @keyup.enter="submitForm(loginForm)"
-          >
-            <template #prefix>
-              <span class="iconfont dashujufengkong icon-size"></span>
-            </template>
-            <template #suffix>
-              <div class="captcha" @click="getCode()">
-                <el-image :src="'data:image/png;base64, ' + viewCode" />
-              </div>
-            </template>
-          </el-input>
-        </el-form-item> -->
         <div class="login-password">
           <div class="forgot-password">
             <div
               class="common-text forgot-password-text"
               @click="router.push('/Register')"
             >
-              注册账号
+              注册账号📝
             </div>
           </div>
           <div class="forgot-password">
@@ -120,7 +100,7 @@
               class="common-text forgot-password-text"
               @click="router.push('/ForgetPassword')"
             >
-              忘记密码？
+              忘记密码❔
             </div>
           </div>
         </div>
@@ -311,10 +291,11 @@ body {
       width: max-content;
       z-index: 2;
       .middle-content {
-        font-family: "Arial", "sans-serif";
-        font-weight: 400;
         font-size: 40px;
-        color: #ffffff;
+        color: #fff;
+        font-weight: 700;
+        font-family: "Arial", sans-serif;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
       }
       .el-divider--horizontal {
         width: 128px;
