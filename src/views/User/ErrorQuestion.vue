@@ -9,7 +9,7 @@
     </el-row>
     <div class="wrong-questions">
       <!-- 顶部统计概览 -->
-      <!-- <el-row class="stats-overview" :gutter="24">
+      <el-row class="stats-overview" :gutter="24">
         <el-col
           :xs="24"
           :sm="8"
@@ -23,16 +23,24 @@
             <div class="stat-title">{{ stat.title }}</div>
           </div>
         </el-col>
-      </el-row> -->
+      </el-row>
 
       <!-- 筛选区 -->
-      <!-- <div class="filter-section">
+      <div class="filter-section">
         <el-radio-group v-model="masteryLevel" class="filter-item">
           <el-radio-button value="all">全部</el-radio-button>
           <el-radio-button value="mastered">已掌握</el-radio-button>
           <el-radio-button value="learning">待复习</el-radio-button>
         </el-radio-group>
-      </div> -->
+        <el-button
+          type="primary"
+          size="small"
+          @click.stop="goToAnswer()"
+          class="retry-btn"
+        >
+          重新作答
+        </el-button>
+      </div>
 
       <!-- 错题卡片列表 -->
       <div class="question-list">
@@ -40,21 +48,35 @@
           v-for="question in filteredQuestions"
           :key="question.id"
           class="question-card"
+          :class="{
+            mastered: question.mastery === 100,
+            learning: question.mastery < 100,
+          }"
           @click="showQuestionDetail(question)"
         >
           <div
-            class="question-tag"
-            :class="getDifficultyClass(question.difficulty)"
+            class="status-badge"
+            :class="{ mastered: question.mastery === 100 }"
           >
-            {{ getDifficultyLabel(question.difficulty) }}
+            <el-icon v-if="question.mastery === 100"><Check /></el-icon>
+            <el-icon v-else><Loading /></el-icon>
+            {{ question.mastery === 100 ? "已掌握" : "待复习" }}
+          </div>
+          <div
+            class="question-tag"
+            :class="getDifficultyClass(question.questionsInfo.difficulty)"
+          >
+            {{ getDifficultyLabel(question.questionsInfo.difficulty) }}
           </div>
           <div class="question-content">
-            <h3 class="question-title">{{ question.title }}</h3>
+            <h3 class="question-title">{{ question.questionsInfo.topic }}</h3>
             <div class="question-meta">
-              <span class="subject-tag">{{ question.subject }}</span>
+              <span class="subject-tag">{{
+                question.questionsInfo.classify
+              }}</span>
               <span class="wrong-count">
                 <el-icon><Warning /></el-icon>
-                错误次数: {{ question.wrongCount }}
+                错误次数: {{ question.wrong_number }}
               </span>
             </div>
             <div class="mastery-progress">
@@ -62,13 +84,14 @@
               <el-progress
                 :percentage="question.mastery"
                 :color="getMasteryColor(question.mastery)"
-                :show-text="false"
-                :stroke-width="4"
+                :show-text="true"
+                :stroke-width="18"
+                :text-inside="true"
               />
             </div>
           </div>
           <div class="last-wrong-time">
-            上次错误: {{ formatDate(question.lastWrongTime) }}
+            上次错误: {{ formatDate(question.wrong_time) }}
           </div>
         </div>
       </div>
@@ -76,48 +99,55 @@
       <!-- 空状态 -->
       <div v-if="filteredQuestions.length === 0" class="empty-state">
         <el-icon class="empty-icon"><DocumentDelete /></el-icon>
-        <h3 class="empty-title">开发中</h3>
-        <!-- <h3 class="empty-title">暂无错题记录</h3>
-        <p class="empty-description">继续努力学习吧!</p> -->
+        <h3 v-if="masteryLevel === 'mastered'" class="empty-title">
+          暂无已掌握的试题记录
+        </h3>
+        <h3 v-if="masteryLevel === 'learning'" class="empty-title">
+          暂无待复习的试题记录
+        </h3>
+        <h3 v-if="masteryLevel === 'all'" class="empty-title">暂无错题记录</h3>
+        <p
+          v-if="masteryLevel === 'mastered'"
+          class="empty-description"
+          @click.stop="goToAnswer()"
+          style="cursor: pointer; color: #409eff"
+        >
+          去答题吧!
+        </p>
+        <p v-if="masteryLevel === 'learning'" class="empty-description">
+          继续努力学习吧!
+        </p>
+        <p v-if="masteryLevel === 'all'" class="empty-description">
+          继续努力学习吧!
+        </p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { Warning, DocumentDelete } from "@element-plus/icons-vue";
+import { ref, computed, onMounted } from "vue";
+import {
+  Warning,
+  DocumentDelete,
+  Check,
+  Loading,
+} from "@element-plus/icons-vue";
 import dayjs from "dayjs";
-const filteredQuestions = ref([
-  // {
-  //   id: 1,
-  //   title: "如何使用 Vue 3 的 Composition API?",
-  //   subject: "Vue.js",
-  //   difficulty: "easy",
-  //   wrongCount: 3,
-  //   mastery: 60,
-  //   lastWrongTime: "2021-09-01",
-  // },
-  // {
-  //   id: 2,
-  //   title: "Vue 3 的响应式原理是什么?",
-  //   subject: "Vue.js",
-  //   difficulty: "medium",
-  //   wrongCount: 2,
-  //   mastery: 80,
-  //   lastWrongTime: "2021-08-28",
-  // },
-  // {
-  //   id: 3,
-  //   title: "Vue 3 的新特性有哪些?",
-  //   subject: "Vue.js",
-  //   difficulty: "hard",
-  //   wrongCount: 5,
-  //   mastery: 40,
-  //   lastWrongTime: "2021-08-25",
-  // },
-]);
-
+import { wrongQuestions } from "@/api/index";
+import { useRouter } from "vue-router";
+const router = useRouter();
+const questions = ref([]);
+const filteredQuestions = computed(() => {
+  switch (masteryLevel.value) {
+    case "mastered":
+      return questions.value.filter((q) => q.mastery === 100);
+    case "learning":
+      return questions.value.filter((q) => q.mastery < 100);
+    default:
+      return questions.value;
+  }
+});
 const getDifficultyClass = (difficulty) => {
   return `difficulty-${difficulty}`;
 };
@@ -143,42 +173,39 @@ const getMasteryColor = (mastery) => {
     return "#f56c6c";
   }
 };
-
-const formatDate = (date) => {
-  return dayjs(date).format("YYYY-MM-DD");
+const goToAnswer = () => {
+  router.push("/ErrorQuestionExam");
 };
-
-// 科目列表
-const subjects = ref([
-  { label: "Vue.js", value: "vue" },
-  { label: "React", value: "react" },
-  { label: "Angular", value: "angular" },
-]);
-
-// 难度等级
-const difficultyLevels = ref([
-  { label: "简单", value: "easy" },
-  { label: "中等", value: "medium" },
-  { label: "困难", value: "hard" },
-]);
+const formatDate = (date) => {
+  return dayjs(date).format("YYYY-MM-DD HH:mm");
+};
 
 const showQuestionDetail = (question) => {
   console.log("查看问题详情:", question);
 };
 
 // 统计数据
-const statistics = ref([
-  { title: "累计错题", value: 126 },
-  { title: "已掌握", value: 78 },
-  { title: "待复习", value: 48 },
+const statistics = computed(() => [
+  {
+    title: "累计错题",
+    value: questions.value.length,
+  },
+  {
+    title: "已掌握",
+    value: questions.value.filter((q) => q.mastery === 100).length,
+  },
+  {
+    title: "待复习",
+    value: questions.value.filter((q) => q.mastery < 100).length,
+  },
 ]);
-
-// 筛选相关
-const selectedSubject = ref("");
-const selectedDifficulty = ref("");
 const masteryLevel = ref("all");
-
-// 其他数据和方法实现...
+onMounted(async () => {
+  const res = await wrongQuestions({
+    user_id: JSON.parse(localStorage.getItem("userInfo")).id,
+  });
+  questions.value = res.data;
+});
 </script>
 
 <style lang="less" scoped>
@@ -200,6 +227,7 @@ const masteryLevel = ref("all");
   background-color: #fff;
   padding: 30px 40px;
   min-height: calc(100vh - 200px);
+  position: relative;
 
   .stats-overview {
     margin-bottom: 20px;
@@ -238,12 +266,27 @@ const masteryLevel = ref("all");
 
   .filter-section {
     margin-bottom: 24px;
-    display: grid;
+    display: flex;
+    justify-content: space-between;
     gap: 16px;
 
     .filter-item {
       display: flex;
       gap: 8px;
+    }
+    .retry-btn {
+      font-size: 12px;
+      border-radius: 10px;
+      padding: 6px 12px;
+      transition: all 0.3s ease;
+      width: 70px;
+      height: 32px;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        background-color: #409eff;
+      }
     }
   }
 
@@ -261,6 +304,63 @@ const masteryLevel = ref("all");
       transition: all 0.3s ease;
       border: 1px solid #ebeef5;
       cursor: pointer;
+
+      &.mastered {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+        border: 1px solid rgba(16, 163, 127, 0.15);
+        box-shadow: 0 2px 12px rgba(16, 163, 127, 0.08);
+
+        &:hover {
+          border-color: rgba(16, 163, 127, 0.3);
+          box-shadow: 0 4px 16px rgba(16, 163, 127, 0.12);
+        }
+      }
+
+      &.learning {
+        background: linear-gradient(135deg, #ffffff 0%, #fff9f9 100%);
+        border: 1px solid rgba(245, 108, 108, 0.15);
+        box-shadow: 0 2px 12px rgba(245, 108, 108, 0.08);
+
+        &:hover {
+          border-color: rgba(245, 108, 108, 0.3);
+          box-shadow: 0 4px 16px rgba(245, 108, 108, 0.12);
+        }
+      }
+
+      .status-badge {
+        position: absolute;
+        top: -10px;
+        left: 20px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        backdrop-filter: blur(8px);
+        z-index: 1;
+
+        &.mastered {
+          background: rgba(16, 163, 127, 0.1);
+          color: #10a37f;
+          border: 1px solid rgba(16, 163, 127, 0.2);
+
+          .el-icon {
+            color: #10a37f;
+          }
+        }
+
+        &:not(.mastered) {
+          background: rgba(245, 108, 108, 0.1);
+          color: #f56c6c;
+          border: 1px solid rgba(245, 108, 108, 0.2);
+
+          .el-icon {
+            color: #f56c6c;
+            animation: rotate 2s linear infinite;
+          }
+        }
+      }
 
       &:hover {
         transform: translateY(-2px);
@@ -337,6 +437,65 @@ const masteryLevel = ref("all");
       }
     }
   }
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-height: 400px;
+    text-align: center;
+    padding: 32px;
+
+    .empty-icon {
+      font-size: 64px;
+      color: #e5e5ea;
+      margin-bottom: 16px;
+
+      // 添加微妙的动画效果
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .empty-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1c1c1e;
+      margin-bottom: 8px;
+
+      // iOS 系统字体
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+        sans-serif;
+    }
+    .empty-description {
+      font-size: 16px;
+      color: #8e8e93;
+      margin: 0;
+
+      // iOS 系统字体
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+        sans-serif;
+    }
+  }
+}
+
+// 添加旋转动画
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// 确保移动端适配
+@media (max-width: 768px) {
+  .question-card {
+    .status-badge {
+      font-size: 11px;
+      padding: 3px 10px;
+    }
+  }
 }
 :deep(.el-select) {
   .el-input__wrapper {
@@ -355,7 +514,6 @@ const masteryLevel = ref("all");
 .question-card {
   animation: fadeIn 0.5s ease-out;
 }
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -364,45 +522,6 @@ const masteryLevel = ref("all");
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  padding: 32px;
-
-  .empty-icon {
-    font-size: 64px;
-    color: #e5e5ea;
-    margin-bottom: 16px;
-
-    // 添加微妙的动画效果
-    animation: float 3s ease-in-out infinite;
-  }
-
-  .empty-title {
-    font-size: 24px;
-    font-weight: 600;
-    color: #1c1c1e;
-    margin-bottom: 8px;
-
-    // iOS 系统字体
-    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-  }
-  .empty-description {
-    font-size: 16px;
-    color: #8e8e93;
-    margin: 0;
-
-    // iOS 系统字体
-    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   }
 }
 

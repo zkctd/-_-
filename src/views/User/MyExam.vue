@@ -99,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { Clock, RefreshRight, Document } from "@element-plus/icons-vue";
 import dayjs from "dayjs";
 import { myExamList, isTest } from "@/api/index";
@@ -108,6 +108,7 @@ import { useRouter } from "vue-router";
 const router = useRouter();
 const examList = ref([]);
 const filterStatus = ref(-1);
+const timer = ref(null);
 const statusPriority = {
   1: 0, // 进行中 - 最高优先级
   0: 1, // 未开始 - 次高优先级
@@ -236,7 +237,7 @@ const handleFilterChange = (value) => {
   filterStatus.value = value;
 };
 
-onMounted(async () => {
+const fetchExamList = async () => {
   try {
     const response = await myExamList({
       user_id: JSON.parse(localStorage.getItem("userInfo")).id,
@@ -245,6 +246,20 @@ onMounted(async () => {
   } catch (error) {
     console.error("获取我的考试列表失败:", error);
     examList.value = [];
+  }
+};
+
+onMounted(async () => {
+  await fetchExamList();
+  timer.value = setInterval(async () => {
+    await fetchExamList();
+  }, 10000);
+});
+
+onUnmounted(() => {
+  if (timer.value) {
+    clearInterval(timer.value);
+    timer.value = null;
   }
 });
 </script>
@@ -285,46 +300,83 @@ onMounted(async () => {
       gap: 24px;
 
       .exam-card {
-        background: #fff;
+        background: #ffffff;
         border-radius: 16px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
         padding: 24px;
         position: relative;
-        transition: all 0.3s ease;
-        border: 1px solid #ebeef5;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
         &:hover {
           transform: translateY(-2px);
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
         }
 
+        // 未开始状态
+        &:has(.status-pending) {
+          border: 1px solid rgba(45, 103, 178, 0.2);
+          background: linear-gradient(145deg, #ffffff, #f8faff);
+          box-shadow: 0 2px 12px rgba(45, 103, 178, 0.08);
+
+          &:hover {
+            border-color: rgba(45, 103, 178, 0.4);
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 24px rgba(45, 103, 178, 0.12);
+          }
+        }
+
+        // 进行中状态
+        &:has(.status-ongoing) {
+          border: 1px solid rgba(255, 153, 0, 0.2);
+          background: linear-gradient(145deg, #ffffff, #fff9f0);
+          box-shadow: 0 2px 12px rgba(255, 153, 0, 0.08);
+
+          &:hover {
+            border-color: rgba(255, 153, 0, 0.4);
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 24px rgba(255, 153, 0, 0.12);
+          }
+        }
+
+        // 已结束状态
+        &:has(.status-completed) {
+          border: 1px solid rgba(103, 194, 58, 0.2);
+          background: linear-gradient(145deg, #ffffff, #f6fbf3);
+          box-shadow: 0 2px 12px rgba(103, 194, 58, 0.08);
+
+          &:hover {
+            border-color: rgba(103, 194, 58, 0.4);
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 24px rgba(103, 194, 58, 0.12);
+          }
+        }
+
         .exam-status {
           position: absolute;
           top: 16px;
           right: 16px;
-          padding: 4px 12px;
-          border-radius: 12px;
-          font-size: 12px;
+          padding: 6px 16px;
+          border-radius: 20px;
+          font-size: 13px;
           font-weight: 500;
+          letter-spacing: 0.3px;
+          backdrop-filter: blur(4px);
 
           &.status-pending {
-            background: #e6f4ff;
+            background: rgba(45, 103, 178, 0.1);
             color: #2d67b2;
+            border: 1px solid rgba(45, 103, 178, 0.2);
           }
 
           &.status-ongoing {
-            background: #fff3e6;
+            background: rgba(255, 153, 0, 0.1);
             color: #ff9900;
+            border: 1px solid rgba(255, 153, 0, 0.2);
           }
 
           &.status-completed {
-            background: #f0f9eb;
+            background: rgba(103, 194, 58, 0.1);
             color: #67c23a;
-          }
-
-          &.status-error {
-            background: #fef0f0;
-            color: #f56c6c;
+            border: 1px solid rgba(103, 194, 58, 0.2);
           }
         }
 
@@ -373,14 +425,18 @@ onMounted(async () => {
         }
 
         .exam-actions {
-          margin-top: 24px;
-          display: flex;
-          justify-content: flex-end;
+          margin-top: 20px;
 
           .el-button {
-            padding: 8px 24px;
-            border-radius: 20px;
+            border-radius: 24px;
+            padding: 10px 28px;
             font-weight: 500;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+
+            &:hover {
+              transform: translateY(-1px);
+            }
           }
         }
       }
@@ -404,8 +460,6 @@ onMounted(async () => {
     font-size: 64px;
     color: #e5e5ea;
     margin-bottom: 16px;
-
-    // 添加微妙的动画效果
     animation: float 3s ease-in-out infinite;
   }
 
@@ -414,21 +468,17 @@ onMounted(async () => {
     font-weight: 600;
     color: #1c1c1e;
     margin-bottom: 8px;
-
-    // iOS 系统字体
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   }
+
   .empty-description {
     font-size: 16px;
     color: #8e8e93;
-    margin: 0;
-
-    // iOS 系统字体
-    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    max-width: 300px;
+    line-height: 1.5;
   }
 }
 
-// 添加浮动动画
 @keyframes float {
   0% {
     transform: translateY(0px);

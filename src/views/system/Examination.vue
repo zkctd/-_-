@@ -213,6 +213,13 @@
                   >查看考试详情</el-button
                 >
                 <el-button
+                  v-if="row.status === 1"
+                  type="primary"
+                  @click="handleExamingDetail(row)"
+                  link
+                  >查看参考详情</el-button
+                >
+                <el-button
                   v-if="row.status === 2 && !row.parent"
                   type="primary"
                   @click="handleRestart(row)"
@@ -1101,6 +1108,13 @@ const tableRowClassName = ({ row }) => {
 const handleExamDetail = (row) => {
   router.push({
     name: "exam_detail",
+    query: { id: row.id },
+  });
+};
+
+const handleExamingDetail = (row) => {
+  router.push({
+    name: "DetailsInProgress",
     query: { id: row.id },
   });
 };

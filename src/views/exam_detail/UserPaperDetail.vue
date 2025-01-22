@@ -55,6 +55,9 @@
                 class="common-button-bg common-button-color"
                 >重置</el-button
               >
+              <el-button type="primary" color="#2D67B2" @click="exportToExcel"
+                >导出成绩</el-button
+              >
             </el-form-item>
           </el-form>
           <el-divider style="margin: 0; margin-bottom: 20px" />
@@ -150,7 +153,8 @@
 import { onMounted, ref } from "vue";
 import { ElMessage } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
-import { gradesDetail } from "@/api/index";
+import { gradesDetail, gradesDetailAll } from "@/api/index";
+import * as XLSX from "xlsx";
 const router = useRouter();
 const searchRef = ref();
 const tableData = ref([]);
@@ -191,7 +195,32 @@ const viewDetail = (row) => {
     },
   });
 };
+const exportToExcel = async () => {
+  try {
+    const res = await gradesDetailAll(searchForm.value);
+    tableData.value = res.data;
+  } catch (error) {
+    console.error("获取成绩数据失败");
+  }
+  // 处理导出数据
+  const exportData = tableData.value.map((item) => ({
+    姓名: item.name,
+    部门: item.depart,
+    成绩: item.total_score + "分",
+    错误率: item.correct_rate + "%",
+    提交时间: item.created_at,
+    答题用时: item.exam_duration,
+  }));
 
+  // 创建工作簿
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "成绩报表");
+
+  // 生成文件并下载
+  const today = new Date().toLocaleDateString().replace(/\//g, "-");
+  XLSX.writeFile(workbook, `成绩报表${today}.xlsx`);
+};
 const searchEvtHandler = () => {
   fetchScores();
 };

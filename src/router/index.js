@@ -33,6 +33,11 @@ const routes = [
         name: "UserPaperDetail",
         component: () => import("../views/exam_detail/UserPaperDetail.vue"),
       },
+      {
+        path: "/DetailsInProgress",
+        name: "DetailsInProgress",
+        component: () => import("../views/exam_detail/DetailsInProgress.vue"),
+      },
     ],
   },
   {
@@ -54,6 +59,11 @@ const routes = [
     path: "/exam",
     name: "exam",
     component: () => import("../views/exam/index.vue"),
+  },
+  {
+    path: "/ErrorQuestionExam",
+    name: "ErrorQuestionExam",
+    component: () => import("../views/User/ErrorQuestionExam.vue"),
   },
   {
     path: "/404",

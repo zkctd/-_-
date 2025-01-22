@@ -219,10 +219,9 @@
         >
           <el-input-number
             v-model="examInfoForm.exam_duration"
-            placeholder="单位为分钟, 最大值为4小时"
+            placeholder="单位为分钟"
             style="width: 40%"
             :min="0"
-            :max="240"
             controls-position="right"
           />
           <el-popover

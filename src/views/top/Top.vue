@@ -99,6 +99,7 @@ import { ref, onMounted, computed } from "vue";
 import { getMenuListData } from "@/api/auth.ts";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
+import { myExamList } from "@/api/index";
 const store = useStore();
 const usertype = Number(localStorage.getItem("usertype"));
 const userInfo = ref({
@@ -153,7 +154,7 @@ const getUserResourceInfo = async () => {
   }
 };
 const pendingTasks = ref(0);
-const totalExams = JSON.parse(localStorage.getItem("userInfo")).exams_number;
+const totalExams = ref(0);
 const features = computed(() => {
   return usertype === 1
     ? [
@@ -210,7 +211,7 @@ const features = computed(() => {
         {
           id: 2,
           title: "错题集",
-          description: "查看和练习错题",
+          description: "查看和重新掌握错题",
           icon: "DocumentCopy",
           color: "red",
           route: "/ErrorQuestion",
@@ -275,8 +276,18 @@ onMounted(() => {
     logintime.value = loginTimeObj._value;
   }
   getUserResourceInfo();
+  fetchExamList();
 });
-
+const fetchExamList = async () => {
+  try {
+    const response = await myExamList({
+      user_id: JSON.parse(localStorage.getItem("userInfo")).id,
+    });
+    totalExams.value = response.data.length;
+  } catch (error) {
+    console.error("获取我的考试列表失败:", error);
+  }
+};
 const toRoute = (item) => {
   if (item.name === "netManage") {
     if (item.children && item.children.length > 0) {

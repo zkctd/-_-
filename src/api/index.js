@@ -107,8 +107,16 @@ export const examResult = (params) => {
   return get("/results/detail/", params);
 };
 
+export const examingUser = (params) => {
+  return get("/exams/unExamUser/", params);
+};
+
 export const isTest = (params) => {
   return get("/users/startAnswering/", params);
+};
+
+export const wrongQuestions = (params) => {
+  return get("/users/wrongQuestion/", params);
 };
 // POST
 export const login = (params) => {
@@ -168,6 +176,14 @@ export const create_correct = (params) => {
 
 export const gradesDetail = (params) => {
   return post("/grades/detail/", params);
+};
+
+export const gradesDetailAll = (params) => {
+  return post("/grades/detail_no_page/", params);
+};
+
+export const repeatWrongExam = (params) => {
+  return post("/users/repeatWrongQuestion/", params);
 };
 // PUT
 export const editorUser = (params) => {
