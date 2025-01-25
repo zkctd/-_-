@@ -13,7 +13,9 @@
             </div>
           </div>
           <div class="timer" v-if="showTimer">
-            <el-icon><Timer /></el-icon>
+            <el-icon>
+              <Timer />
+            </el-icon>
             <span>{{ formatTime(remainingTime) }}</span>
           </div>
         </div>
@@ -26,34 +28,20 @@
       <el-col :span="18" class="question-section">
         <div class="question-container">
           <!-- 单选题部分 -->
-          <div
-            v-if="singleChoiceQuestions.length"
-            class="question-type-section"
-          >
+          <div v-if="singleChoiceQuestions.length" class="question-type-section">
             <div class="type-header">
               <h3>{{ getQuestionTypeTitle("single") }}</h3>
             </div>
-            <div
-              v-for="(question, index) in singleChoiceQuestions"
-              :key="question.id"
-              :id="`question-${question.index}`"
-              class="question-item"
-            >
+            <div v-for="(question, index) in singleChoiceQuestions" :key="question.id"
+              :id="`question-${question.index}`" class="question-item">
               <div class="question-header">
                 <span class="question-index">{{ question.index }}.</span>
                 <div class="question-content">{{ question.topic }}</div>
                 <div class="score-info">（{{ question.score }}分）</div>
               </div>
-              <el-radio-group
-                v-model="answers[question.index]"
-                class="options-list"
-              >
-                <el-radio
-                  v-for="(option, optIndex) in question.options"
-                  :key="optIndex"
-                  :value="option.value"
-                  class="option-item"
-                >
+              <el-radio-group v-model="answers[question.index]" class="options-list">
+                <el-radio v-for="(option, optIndex) in question.options" :key="optIndex" :value="option.value"
+                  class="option-item">
                   {{ String.fromCharCode(65 + optIndex) }}. {{ option.text }}
                 </el-radio>
               </el-radio-group>
@@ -61,34 +49,20 @@
           </div>
 
           <!-- 多选题部分 -->
-          <div
-            v-if="multipleChoiceQuestions.length"
-            class="question-type-section"
-          >
+          <div v-if="multipleChoiceQuestions.length" class="question-type-section">
             <div class="type-header">
               <h3>{{ getQuestionTypeTitle("multiple") }}</h3>
             </div>
-            <div
-              v-for="(question, index) in multipleChoiceQuestions"
-              :key="question.id"
-              :id="`question-${question.index}`"
-              class="question-item"
-            >
+            <div v-for="(question, index) in multipleChoiceQuestions" :key="question.id"
+              :id="`question-${question.index}`" class="question-item">
               <div class="question-header">
                 <span class="question-index">{{ question.index }}.</span>
                 <div class="question-content">{{ question.topic }}</div>
                 <div class="score-info">（{{ question.score }}分）</div>
               </div>
-              <el-checkbox-group
-                v-model="answers[question.index]"
-                class="options-list"
-              >
-                <el-checkbox
-                  v-for="(option, optIndex) in question.options"
-                  :key="optIndex"
-                  :value="option.value"
-                  class="option-item"
-                >
+              <el-checkbox-group v-model="answers[question.index]" class="options-list">
+                <el-checkbox v-for="(option, optIndex) in question.options" :key="optIndex" :value="option.value"
+                  class="option-item">
                   {{ String.fromCharCode(65 + optIndex) }}. {{ option.text }}
                 </el-checkbox>
               </el-checkbox-group>
@@ -100,21 +74,14 @@
             <div class="type-header">
               <h3>{{ getQuestionTypeTitle("judge") }}</h3>
             </div>
-            <div
-              v-for="(question, index) in judgmentQuestions"
-              :key="question.id"
-              :id="`question-${question.index}`"
-              class="question-item"
-            >
+            <div v-for="(question, index) in judgmentQuestions" :key="question.id" :id="`question-${question.index}`"
+              class="question-item">
               <div class="question-header">
                 <span class="question-index">{{ question.index }}.</span>
                 <div class="question-content">{{ question.topic }}</div>
                 <div class="score-info">（{{ question.score }}分）</div>
               </div>
-              <el-radio-group
-                v-model="answers[question.index]"
-                class="options-list"
-              >
+              <el-radio-group v-model="answers[question.index]" class="options-list">
                 <el-radio :value="true">正确</el-radio>
                 <el-radio :value="false">错误</el-radio>
               </el-radio-group>
@@ -126,24 +93,15 @@
             <div class="type-header">
               <h3>{{ getQuestionTypeTitle("short") }}</h3>
             </div>
-            <div
-              v-for="(question, index) in shortAnswerQuestions"
-              :key="question.id"
-              :id="`question-${question.index}`"
-              class="question-item"
-            >
+            <div v-for="(question, index) in shortAnswerQuestions" :key="question.id" :id="`question-${question.index}`"
+              class="question-item">
               <div class="question-header">
                 <span class="question-index">{{ question.index }}.</span>
                 <div class="question-content">{{ question.topic }}</div>
                 <div class="score-info">（{{ question.score }}分）</div>
               </div>
-              <el-input
-                v-model="answers[question.index]"
-                type="textarea"
-                :rows="4"
-                placeholder="请输入答案"
-                class="short-answer-input"
-              />
+              <el-input v-model="answers[question.index]" type="textarea" :rows="4" placeholder="请输入答案"
+                class="short-answer-input" />
             </div>
           </div>
         </div>
@@ -159,16 +117,10 @@
           <div v-if="singleChoiceQuestions.length" class="card-section">
             <div class="card-title">单选题</div>
             <div class="number-grid">
-              <div
-                v-for="question in singleChoiceQuestions"
-                :key="question.index"
-                class="number-item"
-                :class="{
-                  answered: answers[question.index] !== undefined,
-                  current: currentQuestionIndex === question.index,
-                }"
-                @click="scrollToQuestion(question.index)"
-              >
+              <div v-for="question in singleChoiceQuestions" :key="question.index" class="number-item" :class="{
+                answered: answers[question.index] !== undefined,
+                current: currentQuestionIndex === question.index,
+              }" @click="scrollToQuestion(question.index)">
                 {{ question.index }}
               </div>
             </div>
@@ -178,16 +130,10 @@
           <div v-if="multipleChoiceQuestions.length" class="card-section">
             <div class="card-title">多选题</div>
             <div class="number-grid">
-              <div
-                v-for="question in multipleChoiceQuestions"
-                :key="question.index"
-                class="number-item"
-                :class="{
-                  answered: answers[question.index]?.length > 0,
-                  current: currentQuestionIndex === question.index,
-                }"
-                @click="scrollToQuestion(question.index)"
-              >
+              <div v-for="question in multipleChoiceQuestions" :key="question.index" class="number-item" :class="{
+                answered: answers[question.index]?.length > 0,
+                current: currentQuestionIndex === question.index,
+              }" @click="scrollToQuestion(question.index)">
                 {{ question.index }}
               </div>
             </div>
@@ -197,16 +143,10 @@
           <div v-if="judgmentQuestions.length" class="card-section">
             <div class="card-title">判断题</div>
             <div class="number-grid">
-              <div
-                v-for="question in judgmentQuestions"
-                :key="question.index"
-                class="number-item"
-                :class="{
-                  answered: answers[question.index] !== undefined,
-                  current: currentQuestionIndex === question.index,
-                }"
-                @click="scrollToQuestion(question.index)"
-              >
+              <div v-for="question in judgmentQuestions" :key="question.index" class="number-item" :class="{
+                answered: answers[question.index] !== undefined,
+                current: currentQuestionIndex === question.index,
+              }" @click="scrollToQuestion(question.index)">
                 {{ question.index }}
               </div>
             </div>
@@ -216,32 +156,18 @@
           <div v-if="shortAnswerQuestions.length" class="card-section">
             <div class="card-title">简答题</div>
             <div class="number-grid">
-              <div
-                v-for="question in shortAnswerQuestions"
-                :key="question.index"
-                class="number-item"
-                :class="{
-                  answered: answers[question.index]?.length > 0,
-                  current: currentQuestionIndex === question.index,
-                }"
-                @click="scrollToQuestion(question.index)"
-              >
+              <div v-for="question in shortAnswerQuestions" :key="question.index" class="number-item" :class="{
+                answered: answers[question.index]?.length > 0,
+                current: currentQuestionIndex === question.index,
+              }" @click="scrollToQuestion(question.index)">
                 {{ question.index }}
               </div>
             </div>
           </div>
           <div class="action-buttons">
-            <el-button
-              v-if="usertype === 0"
-              type="primary"
-              size="large"
-              @click="handleSubmit"
-              class="submit-btn"
-              >提交试卷</el-button
-            >
-            <el-button size="large" @click="handleReturn" class="return-btn"
-              >退出考试</el-button
-            >
+            <el-button v-if="usertype === 0" type="primary" size="large" @click="handleSubmit"
+              class="submit-btn">提交试卷</el-button>
+            <el-button size="large" @click="handleReturn" class="return-btn">退出考试</el-button>
           </div>
         </div>
       </el-col>
@@ -373,8 +299,8 @@ const submitAnswers = () => {
           answers.value[index] === true
             ? "1"
             : answers.value[index] === false
-            ? "0"
-            : "";
+              ? "0"
+              : "";
         break;
       case "short":
         formattedAnswer = answers.value[index]?.toString() || "";
@@ -404,7 +330,10 @@ const submitAnswers = () => {
             },
           });
         } else {
-          router.push("/MyExmam");
+          ElMessage.success("试卷提交成功！");
+          setTimeout(() => {
+            router.push("/MyExmam");
+          }, 2000);
         }
       }
     })
@@ -579,20 +508,32 @@ onMounted(async () => {
           ? data.exam_duration * 60
           : parseTimeToSeconds(route.query.countdown); // 转换为秒
 
-      questions.value = data.questions.map((q, index) => ({
-        id: q.question.id,
-        index: index + 1,
-        type: q.question.type,
-        topic: q.question.topic,
-        options: q.question.options.split(";").map((opt, i) => ({
-          text: opt,
-          value: i,
-        })),
-        answer: q.question.answer,
-        score: q.score,
-        difficulty: q.question.difficulty,
-        classify: q.question.classify.split(";"),
-      }));
+      questions.value = data.questions.map((q, index) => {
+        const baseQuestion = {
+          id: q.question.id,
+          index: index + 1,
+          type: q.question.type,
+          topic: q.question.topic,
+          answer: q.question.answer,
+          score: q.score,
+          difficulty: q.question.difficulty,
+          classify: q.question.classify.split(";"),
+        };
+
+        // 根据题型处理选项
+        if (q.question.type === 'short') {
+          // 简答题不需要选项
+          baseQuestion.options = [];
+        } else {
+          // 其他题型处理选项
+          baseQuestion.options = (q.question.options || "").split(";").map((opt, i) => ({
+            text: opt,
+            value: i,
+          }));
+        }
+
+        return baseQuestion;
+      });
       questions.value = processQuestions(questions.value, data.is_random === 1);
 
       // 初始化答案
@@ -768,6 +709,7 @@ onUnmounted(() => {
             }
 
             .options-list {
+
               .el-radio,
               .el-checkbox {
                 margin-bottom: 12px;
@@ -806,6 +748,7 @@ onUnmounted(() => {
     // 答题卡区域
     .answer-card-section {
       flex: 0 0 23.7%;
+
       .answer-card {
         background: #fff;
         border-radius: 16px;

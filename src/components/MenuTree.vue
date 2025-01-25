@@ -29,7 +29,7 @@ import { onMounted } from "vue";
 
 const props = defineProps(["menuList"]);
 onMounted(() => {
-  console.log("menuTree", props.menuList);
+  // console.log("menuTree", props.menuList);
 });
 </script>
 

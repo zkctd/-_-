@@ -1,12 +1,12 @@
 import axios from "axios";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage } from "element-plus";
 import router from "@/router";
 
 // 全局设置
 axios.defaults.headers.post["Content-Type"] = "application/json";
 
 const http = axios.create({
-  baseURL: "http://10.1.13.139:8080/api/", // 通用请求地址前缀
+  baseURL: import.meta.env.VITE_APP_API_BASE_URL,
   timeout: 10000,
   headers: { "Content-Type": "application/json;charset=utf-8" },
 });
@@ -16,12 +16,12 @@ http.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("TOKEN");
     if (token) {
-      config.headers.Authorization = "Bearer " + token; // 根据后端要求的格式设置
+      config.headers.Authorization = "Bearer " + token;
     }
-    return config; // 在发送请求之前做什么
+    return config;
   },
   (error) => {
-    return Promise.reject(error); // 对请求返回的错误做什么
+    return Promise.reject(error);
   }
 );
 
@@ -51,11 +51,10 @@ http.interceptors.response.use(
       ElMessage.error(response.data.msg ? response.data.msg : "请求失败！");
       return data;
     } else {
-      return data; // 可以直接返回data，简化每次调用API时的数据结构
+      return data;
     }
   },
   (error) => {
-    // 根据不同的HTTP错误码给出不同的提示
     if (error.response) {
       switch (error.response.status) {
         case 400:

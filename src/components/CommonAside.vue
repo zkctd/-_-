@@ -1,13 +1,7 @@
 <template>
   <div class="menu-content">
-    <el-menu
-      class="el-menu-vertical-demo"
-      :default-active="activeKey"
-      :router="true"
-      @open="handleOpen"
-      @close="handleClose"
-      @select="handleSelect"
-    >
+    <el-menu class="el-menu-vertical-demo" :default-active="activeKey" :router="true" @open="handleOpen"
+      @close="handleClose" @select="handleSelect">
       <MenuTree :menuList="menuList"></MenuTree>
     </el-menu>
   </div>
@@ -23,10 +17,10 @@ const route = useRoute();
 
 const activeKey = ref(null);
 const handleOpen = (key, keyPath) => {
-  console.log(key, keyPath);
+  // console.log(key, keyPath);
 };
 const handleClose = (key, keyPath) => {
-  console.log(key, keyPath);
+  // console.log(key, keyPath);
 };
 const handleSelect = (selectKey) => {
   activeKey.value = selectKey;
@@ -52,11 +46,9 @@ onMounted(() => {
 <style lang="less" scoped>
 .menu-content {
   height: 100%;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 255, 255, 0.98) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.98) 100%);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
   border-right: 1px solid rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
@@ -144,6 +136,7 @@ onMounted(() => {
 // 折叠动画
 .el-menu-vertical-demo:not(.el-menu--collapse) {
   width: 240px;
+
   .el-menu-item,
   .el-sub-menu__title {
     animation: slideIn 0.3s ease-out;
@@ -155,6 +148,7 @@ onMounted(() => {
     opacity: 0;
     transform: translateX(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -164,11 +158,9 @@ onMounted(() => {
 // 暗色主题适配
 @media (prefers-color-scheme: dark) {
   .menu-content {
-    background: linear-gradient(
-      180deg,
-      rgba(30, 30, 30, 0.95) 0%,
-      rgba(30, 30, 30, 0.98) 100%
-    );
+    background: linear-gradient(180deg,
+        rgba(30, 30, 30, 0.95) 0%,
+        rgba(30, 30, 30, 0.98) 100%);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
 
     :deep(.el-menu-item) {

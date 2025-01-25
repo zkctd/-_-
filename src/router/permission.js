@@ -48,7 +48,7 @@ router.afterEach(() => {
 });
 export const addDynamicRoutes = (menus) => {
   const routes = menusToRoutes(menus);
-  console.log("roters", router.getRoutes());
+  // console.log("roters", router.getRoutes());
   routes.map((route) => {
     router.addRoute("LayoutPage", route);
   });

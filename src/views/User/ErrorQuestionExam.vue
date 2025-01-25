@@ -4,24 +4,14 @@
     <div class="answer-card-sidebar">
       <div class="card-header">答题卡</div>
       <div class="question-buttons">
-        <el-button
-          v-for="(q, index) in questions"
-          :key="index"
-          :class="{
-            'is-answered': selectedAnswersMap[index]?.length > 0,
-            'is-current': currentIndex === index,
-          }"
-          size="small"
-          @click="jumpToQuestion(index)"
-        >
+        <el-button v-for="(q, index) in questions" :key="index" :class="{
+          'is-answered': selectedAnswersMap[index]?.length > 0,
+          'is-current': currentIndex === index,
+        }" size="small" @click="jumpToQuestion(index)">
           {{ index + 1 }}
         </el-button>
       </div>
-      <el-button
-        type="primary"
-        class="submit-all-btn"
-        @click="submitAllAnswers"
-      >
+      <el-button type="primary" class="submit-all-btn" @click="submitAllAnswers">
         提交答卷
       </el-button>
     </div>
@@ -35,37 +25,25 @@
             {{ currentIndex + 1 }} / {{ questions.length }}
           </div>
           <!-- 修改进度条部分的代码 -->
-          <el-progress
-            :percentage="
-              questions.length
-                ? ((currentIndex + 1) / questions.length) * 100
-                : 0
-            "
-            :stroke-width="4"
-            :show-text="false"
-          />
+          <el-progress :percentage="questions.length
+            ? ((currentIndex + 1) / questions.length) * 100
+            : 0
+            " :stroke-width="4" :show-text="false" />
         </div>
         <el-button @click="router.back()" class="exit-btn" text>
-          <el-icon><Close /></el-icon>
+          <el-icon>
+            <Close />
+          </el-icon>
         </el-button>
       </div>
 
       <!-- 题目类型指示器 -->
       <div class="type-indicator">
-        <el-tag
-          :type="getTypeTagType(currentQuestion?.questionsInfo.type)"
-          effect="light"
-          size="small"
-        >
+        <el-tag :type="getTypeTagType(currentQuestion?.questionsInfo.type)" effect="light" size="small">
           {{ getTypeLabel(currentQuestion?.questionsInfo.type) }}
         </el-tag>
-        <el-tag
-          :type="
-            getDifficultyTagType(currentQuestion?.questionsInfo.difficulty)
-          "
-          effect="light"
-          size="small"
-        >
+        <el-tag :type="getDifficultyTagType(currentQuestion?.questionsInfo.difficulty)
+          " effect="light" size="small">
           {{ getDifficultyLabel(currentQuestion?.questionsInfo.difficulty) }}
         </el-tag>
       </div>
@@ -77,30 +55,22 @@
         </h2>
 
         <!-- 选择题选项 -->
-        <template
-          v-if="
-            ['single', 'multiple'].includes(currentQuestion.questionsInfo.type)
-          "
-        >
+        <template v-if="
+          ['single', 'multiple'].includes(currentQuestion.questionsInfo.type)
+        ">
           <div class="options-list">
-            <div
-              v-for="(option, index) in parseOptions(
-                currentQuestion.questionsInfo.options
-              )"
-              :key="index"
-              class="option-item"
-              :class="{
-                selected: selectedAnswersMap[currentIndex]?.includes(
-                  index.toString()
-                ),
-                correct: showResult && isCorrectAnswer(index.toString()),
-                wrong:
-                  showResult &&
-                  !isCorrectAnswer(index.toString()) &&
-                  selectedAnswersMap[currentIndex]?.includes(index.toString()),
-              }"
-              @click="toggleAnswer(index.toString())"
-            >
+            <div v-for="(option, index) in parseOptions(
+              currentQuestion.questionsInfo.options
+            )" :key="index" class="option-item" :class="{
+              selected: selectedAnswersMap[currentIndex]?.includes(
+                index.toString()
+              ),
+              correct: showResult && isCorrectAnswer(index.toString()),
+              wrong:
+                showResult &&
+                !isCorrectAnswer(index.toString()) &&
+                selectedAnswersMap[currentIndex]?.includes(index.toString()),
+            }" @click="toggleAnswer(index.toString())">
               <div class="option-marker">
                 {{ String.fromCharCode(65 + index) }}
               </div>
@@ -113,23 +83,32 @@
         <template v-if="currentQuestion.questionsInfo.type === 'judge'">
           <div class="judge-options">
             <el-button-group>
-              <el-button
-                :class="{
-                  selected: selectedAnswersMap[currentIndex]?.includes('0'),
-                }"
-                @click="toggleAnswer('0')"
-              >
+              <el-button :class="{
+                selected: selectedAnswersMap[currentIndex]?.includes('0'),
+              }" @click="toggleAnswer('0')">
                 正确
               </el-button>
-              <el-button
-                :class="{
-                  selected: selectedAnswersMap[currentIndex]?.includes('1'),
-                }"
-                @click="toggleAnswer('1')"
-              >
+              <el-button :class="{
+                selected: selectedAnswersMap[currentIndex]?.includes('1'),
+              }" @click="toggleAnswer('1')">
                 错误
               </el-button>
             </el-button-group>
+          </div>
+        </template>
+        <template v-if="currentQuestion.questionsInfo.type === 'short'">
+          <div class="short-answer">
+            <el-input v-model="selectedAnswersMap[currentIndex]" type="textarea" :rows="4" placeholder="请输入答案"
+              resize="none" maxlength="500" show-word-limit />
+            <div v-if="showResult" class="keywords-hint">
+              <div class="hint-title">关键词参考:</div>
+              <div class="keywords-list">
+                <el-tag v-for="(keyword, index) in currentQuestion.questionsInfo.keywords.split(';')" :key="index"
+                  size="small" effect="light" class="keyword-tag">
+                  {{ keyword }}
+                </el-tag>
+              </div>
+            </div>
           </div>
         </template>
       </div>
@@ -139,11 +118,7 @@
         <el-button @click="prevQuestion" :disabled="currentIndex === 0">
           上一题
         </el-button>
-        <el-button
-          type="primary"
-          @click="nextQuestion"
-          :disabled="currentIndex === questions.length - 1"
-        >
+        <el-button type="primary" @click="nextQuestion" :disabled="currentIndex === questions.length - 1">
           下一题
         </el-button>
       </div>
@@ -151,22 +126,13 @@
 
     <!-- 结果弹窗 -->
     <!-- 修改结果弹窗部分 -->
-    <el-dialog
-      v-model="showResultDialog"
-      title="答题结果"
-      width="400px"
-      :show-close="false"
-      :close-on-click-modal="false"
-      align-center
-      class="result-dialog"
-    >
+    <el-dialog v-model="showResultDialog" title="答题结果" width="400px" :show-close="false" :close-on-click-modal="false"
+      align-center class="result-dialog">
       <div class="result-content">
         <!-- 成绩等级 -->
         <div class="grade-section">
           <div class="grade-circle" :class="getGradeClass">
-            <span class="percentage"
-              >{{ ((correctCount / questions.length) * 100).toFixed(1) }}%</span
-            >
+            <span class="percentage">{{ ((correctCount / questions.length) * 100).toFixed(1) }}%</span>
             <span class="grade-label">{{ getGradeLabel }}</span>
           </div>
         </div>
@@ -193,14 +159,14 @@
       </div>
 
       <template #footer>
-        <el-button
-          type="primary"
-          class="return-btn"
-          @click="returnToList"
-          :style="{ background: getGradeColor }"
-        >
-          返回列表
-        </el-button>
+        <div class="dialog-footer">
+          <el-button type="primary" class="retry-btn" @click="retryExam" :style="{ background: '#606266' }">
+            再答一次
+          </el-button>
+          <el-button type="primary" class="return-btn" @click="returnToList" :style="{ background: getGradeColor }">
+            返回列表
+          </el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -210,7 +176,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { Close } from "@element-plus/icons-vue";
 import { wrongQuestions, repeatWrongExam } from "@/api/index";
-
+import { ElMessage } from "element-plus";
 const router = useRouter();
 const questions = ref([]);
 const currentIndex = ref(0);
@@ -245,15 +211,35 @@ const getGradeColor = computed(() => {
 });
 // 获取题目数据
 const fetchQuestions = async () => {
-  const res = await wrongQuestions({
-    user_id: JSON.parse(localStorage.getItem("userInfo")).id,
-  });
-  questions.value = res.data
-    .filter((q) => q.mastery < 100)
-    .sort((a, b) => {
+  try {
+    const res = await wrongQuestions({
+      user_id: JSON.parse(localStorage.getItem("userInfo")).id,
+    });
+    const filteredQuestions = res.data.filter((q) => q.mastery < 100);
+
+    // 检查是否有需要复习的题目
+    if (filteredQuestions.length === 0) {
+      ElMessage({
+        type: "success",
+        message: "太棒了！所有题目都已掌握！",
+        duration: 2000,
+        onClose: () => {
+          router.back();
+        },
+      });
+      return;
+    }
+
+    // 按题型排序
+    questions.value = filteredQuestions.sort((a, b) => {
       const typeOrder = { single: 1, multiple: 2, judge: 3 };
       return typeOrder[a.questionsInfo.type] - typeOrder[b.questionsInfo.type];
     });
+  } catch (error) {
+    console.error("获取题目失败:", error);
+    ElMessage.error("获取题目失败，请稍后重试");
+    router.back();
+  }
 };
 
 // 解析选项
@@ -277,6 +263,7 @@ const getTypeLabel = (type) => {
     single: "单选题",
     multiple: "多选题",
     judge: "判断题",
+    short: "简答题",
   };
   return labels[type] || "";
 };
@@ -300,14 +287,17 @@ const getDifficultyLabel = (difficulty) => {
   };
   return labels[difficulty] || "";
 };
-
+const retryExam = () => {
+  window.location.reload();
+};
 // 切换答案选择
 const toggleAnswer = (answer) => {
   if (!selectedAnswersMap.value[currentIndex.value]) {
-    selectedAnswersMap.value[currentIndex.value] = [];
+    selectedAnswersMap.value[currentIndex.value] =
+      currentQuestion.value.questionsInfo.type === 'short' ? '' : [];
   }
 
-  if (currentQuestion.value.questionsInfo.type === "multiple") {
+  if (currentQuestion.value.questionsInfo.type === 'multiple') {
     const answers = selectedAnswersMap.value[currentIndex.value];
     const index = answers.indexOf(answer);
     if (index > -1) {
@@ -315,6 +305,8 @@ const toggleAnswer = (answer) => {
     } else {
       answers.push(answer);
     }
+  } else if (currentQuestion.value.questionsInfo.type === 'short') {
+    selectedAnswersMap.value[currentIndex.value] = answer;
   } else {
     selectedAnswersMap.value[currentIndex.value] = [answer];
   }
@@ -324,28 +316,56 @@ const jumpToQuestion = (index) => {
 };
 // 检查答案是否正确
 const isCorrectAnswer = (answer) => {
-  return currentQuestion.value.questionsInfo.answer.split(";").includes(answer);
+  if (currentQuestion.value.questionsInfo.type === 'short') {
+    const keywords = currentQuestion.value.questionsInfo.keywords.split(';');
+    return keywords.some(keyword => answer.includes(keyword));
+  }
+  return currentQuestion.value.questionsInfo.answer.split(';').includes(answer);
 };
 
 // 提交答案
+// 修改 submitAllAnswers 函数
 const submitAllAnswers = async () => {
   let correct = 0;
   questions.value.forEach((question, index) => {
-    const userAnswers = selectedAnswersMap.value[index] || [];
-    const correctAnswers = question.questionsInfo.answer.split(";");
-    if (arraysEqual(userAnswers.sort(), correctAnswers.sort())) {
-      correct++;
+    const userAnswers = selectedAnswersMap.value[index];
+    if (question.questionsInfo.type === 'short') {
+      const keywords = question.questionsInfo.keywords.split(';');
+      if (keywords.some(keyword => userAnswers?.includes(keyword))) {
+        correct++;
+      }
+    } else {
+      const correctAnswers = question.questionsInfo.answer.split(';');
+      if (Array.isArray(userAnswers) && arraysEqual(userAnswers.sort(), correctAnswers.sort())) {
+        correct++;
+      }
     }
   });
+
   correctCount.value = correct;
   showResultDialog.value = true;
+
+  // 修改这里的提交数据处理逻辑
   const submitData = {
     user_id: JSON.parse(localStorage.getItem("userInfo")).id,
-    questions_solutions: questions.value.map((q, index) => ({
-      question: q.questionsInfo.id,
-      solution: (selectedAnswersMap.value[index] || []).join(";"),
-    })),
+    questions_solutions: questions.value.map((q, index) => {
+      const answer = selectedAnswersMap.value[index];
+      // 根据题型处理答案格式
+      let solution = '';
+      if (q.questionsInfo.type === 'short') {
+        // 简答题直接使用字符串
+        solution = answer || '';
+      } else {
+        // 其他题型使用数组并转换为字符串
+        solution = (Array.isArray(answer) ? answer : []).join(';');
+      }
+      return {
+        question: q.questionsInfo.id,
+        solution: solution
+      };
+    }),
   };
+
   try {
     await repeatWrongExam(submitData);
   } catch (error) {
@@ -451,6 +471,7 @@ onMounted(() => {
     }
   }
 }
+
 .exam-container {
   max-width: 800px;
   margin: 0 auto;
@@ -628,6 +649,7 @@ onMounted(() => {
     }
   }
 }
+
 .result-content {
   padding: 20px 0;
 
@@ -667,6 +689,7 @@ onMounted(() => {
     padding-bottom: 60px;
   }
 }
+
 @media (max-width: 768px) {
   .answer-card-sidebar {
     position: fixed;
@@ -698,6 +721,7 @@ onMounted(() => {
     }
   }
 }
+
 .result-dialog {
   :deep(.el-dialog) {
     border-radius: 20px;
@@ -737,11 +761,9 @@ onMounted(() => {
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.8),
-        rgba(255, 255, 255, 0.4)
-      );
+      background: linear-gradient(135deg,
+          rgba(255, 255, 255, 0.8),
+          rgba(255, 255, 255, 0.4));
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.3);
@@ -750,12 +772,15 @@ onMounted(() => {
       &.excellent {
         border-color: #10a37f;
       }
+
       &.good {
         border-color: #4caf50;
       }
+
       &.pass {
         border-color: #ff9800;
       }
+
       &.fail {
         border-color: #f56c6c;
       }
@@ -800,6 +825,7 @@ onMounted(() => {
         &.correct {
           color: #10a37f;
         }
+
         &.wrong {
           color: #f56c6c;
         }
@@ -825,6 +851,86 @@ onMounted(() => {
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.dialog-footer {
+  display: flex;
+  gap: 12px;
+
+  .retry-btn,
+  .return-btn {
+    flex: 1;
+    height: 44px;
+    border-radius: 12px;
+    font-weight: 500;
+    border: none;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+.short-answer {
+  margin-top: 20px;
+
+  :deep(.el-textarea) {
+    .el-textarea__inner {
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #dcdfe6;
+      font-size: 16px;
+      line-height: 1.6;
+      transition: all 0.3s ease;
+      resize: none;
+
+      &:focus {
+        border-color: #10a37f;
+        box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.1);
+      }
+    }
+
+    .el-input__count {
+      background: transparent;
+      font-size: 12px;
+      color: #909399;
+    }
+  }
+
+  .keywords-hint {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 12px;
+
+    .hint-title {
+      font-size: 14px;
+      color: #606266;
+      margin-bottom: 12px;
+    }
+
+    .keywords-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      .keyword-tag {
+        background: #fff;
+        border: 1px solid #10a37f;
+        color: #10a37f;
+        padding: 4px 12px;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .dialog-footer {
+    flex-direction: column;
+    gap: 8px;
   }
 }
 

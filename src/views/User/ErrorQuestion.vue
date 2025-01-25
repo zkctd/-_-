@@ -37,6 +37,8 @@
           size="small"
           @click.stop="goToAnswer()"
           class="retry-btn"
+          :disabled="!hasQuestionsToReview"
+          :title="!hasQuestionsToReview ? '当前没有需要复习的题目' : ''"
         >
           重新作答
         </el-button>
@@ -147,6 +149,9 @@ const filteredQuestions = computed(() => {
     default:
       return questions.value;
   }
+});
+const hasQuestionsToReview = computed(() => {
+  return questions.value.some((q) => q.mastery < 100);
 });
 const getDifficultyClass = (difficulty) => {
   return `difficulty-${difficulty}`;
@@ -286,6 +291,15 @@ onMounted(async () => {
         transform: translateY(-1px);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         background-color: #409eff;
+      }
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+        &:hover {
+          transform: none;
+          box-shadow: none;
+          background-color: var(--el-button-disabled-bg-color);
+        }
       }
     }
   }

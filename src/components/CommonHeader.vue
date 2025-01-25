@@ -11,11 +11,7 @@
             <span class="user-name">{{ userInfo.username }}</span>
             <div class="avatar-container">
               <!-- 添加默认头像 -->
-              <img
-                class="avatar"
-                :src="userInfo.avatar || '/images/default-avatar.png'"
-                alt="avatar"
-              />
+              <img class="avatar" :src="userInfo.avatar || '/images/default-avatar.png'" alt="avatar" />
             </div>
           </div>
           <template #dropdown>
@@ -61,6 +57,9 @@ function logout1() {
       localStorage.removeItem("TOKEN");
       localStorage.removeItem("menuList");
       localStorage.removeItem("activeKey");
+      localStorage.removeItem("userInfo");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("loginTime");
       // 跳转到登录页面
       router.push("/login");
     });
